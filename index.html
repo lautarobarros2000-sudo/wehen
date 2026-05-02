@@ -666,14 +666,14 @@ function extractPlayers(rows) {
     // Detect player rows: first col is a number or "EX N"
     if (!nro || !nombre || !apellido) continue;
     if (!/^(EX\s+)?\d+$/.test(nro)) continue;
-    // TOTAL columns: index 20=PJ, 21=G, 22=A, 23=VI, 24=Tit, 25=Sup, 26=Exp
-    const pj  = parseInt(row[20]) || 0;
-    const g   = parseInt(row[21]) || 0;
-    const a   = parseInt(row[22]) || 0;
-    const vi  = parseInt(row[23]) || 0;
-    const tit = parseInt(row[24]) || 0;
-    const sup = parseInt(row[25]) || 0;
-    const exp = parseInt(row[26]) || 0;
+    // TOTAL columns: index 21=PJ, 22=G, 23=A, 24=VI, 25=Tit, 26=Sup, 27=Exp
+    const pj  = parseInt(row[21]) || 0;
+    const g   = parseInt(row[22]) || 0;
+    const a   = parseInt(row[23]) || 0;
+    const vi  = parseInt(row[24]) || 0;
+    const tit = parseInt(row[25]) || 0;
+    const sup = parseInt(row[26]) || 0;
+    const exp = parseInt(row[27]) || 0;
     const ex  = nro.startsWith('EX');
     const numMatch = nro.match(/\d+/);
     const num = numMatch ? parseInt(numMatch[0]) : 0;
@@ -684,57 +684,83 @@ function extractPlayers(rows) {
 
 // Parse season summary from a tab
 function extractSeasonSummary(rows) {
-  // Look for the TORNEO row with PJ PG PP PE GF GC PTS
   let torneoRes = null, copaRes = null, totalRes = null;
   let torneoPos = '—', copaNombre = 'Copa', copaPos = '—';
   let tablaTorneo = [], tablaCopa = [];
   let inTablaTorneo = false, inTablaCopa = false;
+  let foundTorneo = false;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const r0 = row[0]?.trim() || '';
-    const r7 = row[7]?.trim() || '';
-    const r14 = row[14]?.trim() || '';
+    const r0 = (row[0] || '').trim();
+    const r7 = (row[7] || '').trim();
+    const r20 = (row[20] || '').trim();
 
-    // Detect season header rows
-    if (/APERTURA|CLAUSURA/.test(r0) && /^\d+$/.test(row[8])) {
+    // Header row with season name and stats
+    // Format: VS,Resultado,,Goles,Asist,Sede,,APERTURA XX,PJ,PG,PP,PE,GF,GC,PTS,,,,,,TORNEO+COPA,PJ,PG,PP,PE,GF,GC,PTS
+    if (r0 === 'VS' && r7 && /APERTURA|CLAUSURA/.test(r7)) {
       torneoRes = {
         pj: parseInt(row[8])||0, pg: parseInt(row[9])||0,
         pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
         gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
       };
-      // Copa name from r0 context
-      copaNombre = 'Copa';
+      totalRes = {
+        pj: parseInt(row[21])||0, pg: parseInt(row[22])||0,
+        pp: parseInt(row[23])||0, pe: parseInt(row[24])||0,
+        gf: parseInt(row[25])||0, gc: parseInt(row[26])||0, pts: parseInt(row[27])||0
+      };
+      foundTorneo = true;
     }
-    if (/COPA/.test(r0) && /^\d+$/.test(row[8])) {
-      copaNombre = r0;
+
+    // Copa header row
+    // Format: VS,Resultado,,Goles,Asist,Sede,,COPA DE X,PJ,PG,PP,PE,GF,GC,PTS
+    if (r0 === 'VS' && r7 && /COPA|SUPER/.test(r7)) {
+      copaNombre = r7;
       copaRes = {
         pj: parseInt(row[8])||0, pg: parseInt(row[9])||0,
         pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
         gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
       };
     }
-    if (/TORNEO.*COPA|TOTAL/.test(r0) && /^\d+$/.test(row[8])) {
-      totalRes = {
-        pj: parseInt(row[8])||0, pg: parseInt(row[9])||0,
-        pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
-        gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
-      };
+
+    // Position rows: "Posición ,11vo" or "Posición ,6to"
+    if (/^Posición/.test(r0)) {
+      const pos = (row[1] || '').trim();
+      if (!torneoPos || torneoPos === '—') torneoPos = pos;
+      else copaPos = pos;
     }
-    if (r0 === 'Posición' || r0 === 'Posición ') {
-      if (!torneoPos || torneoPos === '—') torneoPos = row[1]?.trim() || '—';
-      else copaPos = row[1]?.trim() || '—';
+
+    // Standings tables
+    if (r0 === 'TABLA' && (row[1]||'').trim() === 'POSICIÓN') {
+      inTablaTorneo = true; inTablaCopa = false; continue;
     }
-    // Tables
-    if (r0 === 'TABLA' && row[1] === 'POSICIÓN') { inTablaTorneo = true; inTablaCopa = false; continue; }
-    if (r0 === 'TABLA COPA' && row[1] === 'POSICIÓN') { inTablaCopa = true; inTablaTorneo = false; continue; }
-    if (inTablaTorneo && row[1] && /^\d+$/.test(row[1])) {
-      tablaTorneo.push({ pos: parseInt(row[1]), equipo: row[2]?.trim(), pts: parseInt(row[3])||0, esWehen: row[2]?.trim() === 'Wehen' });
-    } else if (inTablaTorneo && row[1] && !/^\d+$/.test(row[1])) { inTablaTorneo = false; }
-    if (inTablaCopa && row[1] && /^\d+$/.test(row[1])) {
-      tablaCopa.push({ pos: parseInt(row[1]), equipo: row[2]?.trim(), pts: parseInt(row[3])||0, esWehen: row[2]?.trim() === 'Wehen' });
-    } else if (inTablaCopa && row[1] && !/^\d+$/.test(row[1])) { inTablaCopa = false; }
+    if (r0 === 'TABLA COPA' && (row[1]||'').trim() === 'POSICIÓN') {
+      inTablaCopa = true; inTablaTorneo = false; continue;
+    }
+
+    if (inTablaTorneo) {
+      const pos = (row[1]||'').trim();
+      const equipo = (row[2]||'').trim();
+      const pts = parseInt(row[3])||0;
+      if (pos && /^\d+$/.test(pos) && equipo) {
+        tablaTorneo.push({ pos: parseInt(pos), equipo, pts, esWehen: equipo === 'Wehen' });
+      } else if (pos && !/^\d+$/.test(pos)) {
+        inTablaTorneo = false;
+      }
+    }
+
+    if (inTablaCopa) {
+      const pos = (row[1]||'').trim();
+      const equipo = (row[2]||'').trim();
+      const pts = parseInt(row[3])||0;
+      if (pos && /^\d+$/.test(pos) && equipo) {
+        tablaCopa.push({ pos: parseInt(pos), equipo, pts, esWehen: equipo === 'Wehen' });
+      } else if (pos && !/^\d+$/.test(pos)) {
+        inTablaCopa = false;
+      }
+    }
   }
+
   return { torneoRes, copaRes, totalRes, torneoPos, copaPos, copaNombre, tablaTorneo, tablaCopa };
 }
 
@@ -742,24 +768,35 @@ function extractSeasonSummary(rows) {
 function extractMatches(rows) {
   const matches = [];
   let currentTipo = 'Torneo';
+  let inMatchSection = false;
+
   for (const row of rows) {
-    const r0 = row[0]?.trim() || '';
-    const r1 = row[1]?.trim() || '';
-    const r2 = row[2]?.trim() || '';
-    if (/^COPA|^SUPERPREMIER/.test(r0)) { currentTipo = 'Copa'; continue; }
-    if (/^APERTURA|^CLAUSURA|^TABLA|^VS|^Posición/.test(r0)) continue;
-    // Match row: rival, gf, gc, goles, asistencias, sede
-    if (r0 && r1 !== '' && !isNaN(parseInt(r1)) && r2 !== '' && !isNaN(parseInt(r2))) {
+    const r0 = (row[0] || '').trim();
+    const r1 = (row[1] || '').trim();
+    const r2 = (row[2] || '').trim();
+    const r7 = (row[7] || '').trim();
+
+    // VS header row — starts a match section and tells us torneo or copa
+    if (r0 === 'VS') {
+      inMatchSection = true;
+      if (/COPA|SUPER/.test(r7)) currentTipo = 'Copa';
+      else if (/APERTURA|CLAUSURA/.test(r7)) currentTipo = 'Torneo';
+      continue;
+    }
+
+    if (!inMatchSection) continue;
+    if (/^TABLA|^Posición|^GLOBAL|^LIBRE$/.test(r0) || !r0) continue;
+
+    // Match with result
+    if (r1 !== '' && r2 !== '' && !isNaN(parseInt(r1)) && !isNaN(parseInt(r2))) {
       matches.push({
-        rival: r0,
-        tipo: currentTipo,
-        gf: parseInt(r1),
-        gc: parseInt(r2),
-        goles: row[3]?.trim() || '—',
-        asist: row[4]?.trim() || '—',
+        rival: r0, tipo: currentTipo,
+        gf: parseInt(r1), gc: parseInt(r2),
+        goles: (row[3] || '').trim() || '—',
+        asist: (row[4] || '').trim() || '—',
         pendiente: false
       });
-    } else if (r0 && (r1 === '' || r1 === '-') && r2 === '') {
+    } else if (r1 === '' || r1 === '-' || r1 === '–') {
       matches.push({ rival: r0, tipo: currentTipo, pendiente: true });
     }
   }
