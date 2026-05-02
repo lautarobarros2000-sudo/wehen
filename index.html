@@ -716,11 +716,15 @@ function extractSeasonSummary(rows) {
         pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
         gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
       };
-      totalRes = {
-        pj: parseInt(row[21])||0, pg: parseInt(row[22])||0,
-        pp: parseInt(row[23])||0, pe: parseInt(row[24])||0,
-        gf: parseInt(row[25])||0, gc: parseInt(row[26])||0, pts: parseInt(row[27])||0
-      };
+      // Try to read total from cols 21-27 (Apertura 2023 style)
+      const totalPJ = parseInt(row[21])||0;
+      if (totalPJ > 0) {
+        totalRes = {
+          pj: totalPJ, pg: parseInt(row[22])||0,
+          pp: parseInt(row[23])||0, pe: parseInt(row[24])||0,
+          gf: parseInt(row[25])||0, gc: parseInt(row[26])||0, pts: parseInt(row[27])||0
+        };
+      }
     }
 
     // First data row after copa header has stats in cols 8-14
@@ -763,6 +767,20 @@ function extractSeasonSummary(rows) {
         tablaCopa.push({ pos: parseInt(pos), equipo, pts: parseInt(row[3])||0, esWehen: equipo === 'Wehen' });
       } else if (pos && !/^\d+$/.test(pos)) { inTablaCopa = false; }
     }
+  }
+
+  // If no explicit total found, calculate from torneo + copa
+  if (!totalRes && torneoRes) {
+    const c = copaRes || { pj:0, pg:0, pp:0, pe:0, gf:0, gc:0, pts:0 };
+    totalRes = {
+      pj:  torneoRes.pj  + c.pj,
+      pg:  torneoRes.pg  + c.pg,
+      pp:  torneoRes.pp  + c.pp,
+      pe:  torneoRes.pe  + c.pe,
+      gf:  torneoRes.gf  + c.gf,
+      gc:  torneoRes.gc  + c.gc,
+      pts: torneoRes.pts + c.pts
+    };
   }
 
   return { torneoRes, copaRes, totalRes, torneoPos, copaPos, copaNombre, tablaTorneo, tablaCopa };
@@ -881,24 +899,18 @@ async function loadAllSheets() {
       const { torneoRes, copaRes, totalRes, torneoPos, copaPos, copaNombre, tablaTorneo, tablaCopa } = extractSeasonSummary(rows);
       const matches = extractMatches(rows);
 
-      if (totalRes && allSeasons[name]) {
-        allSeasons[name].resumen = totalRes;
-        allSeasons[name].torneoResumen = { ...torneoRes, pos: torneoPos, copaNombre };
-        allSeasons[name].copaResumen = { ...copaRes, pos: copaPos };
-        if (tablaTorneo.length > 0) allSeasons[name].tablaTorneo = tablaTorneo;
-        if (tablaCopa.length > 0) allSeasons[name].tablaCopa = tablaCopa;
-        if (matches.length > 0) allSeasons[name].partidos = matches;
-        if (players.length > 0) allSeasons[name].jugadores = players;
-      } else if (totalRes) {
-        allSeasons[name] = {
-          resumen: totalRes,
-          torneoResumen: { ...torneoRes, pos: torneoPos, copaNombre },
-          copaResumen: { ...copaRes, pos: copaPos },
-          tablaTorneo, tablaCopa,
-          partidos: matches,
-          jugadores: players,
-        };
-      }
+      // Always update allSeasons — totalRes guaranteed non-null from extractSeasonSummary fallback
+      allSeasons[name] = {
+        resumen:       totalRes  || { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0 },
+        torneoResumen: torneoRes ? { ...torneoRes, pos: torneoPos, copaNombre } : { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0, pos:'—', copaNombre:'Copa' },
+        copaResumen:   copaRes   ? { ...copaRes,   pos: copaPos   } : { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, pts:0, pos:'—' },
+        tablaTorneo:   tablaTorneo.length > 0 ? tablaTorneo : (allSeasons[name]?.tablaTorneo || []),
+        tablaCopa:     tablaCopa.length  > 0 ? tablaCopa  : (allSeasons[name]?.tablaCopa  || []),
+        partidos:      matches.length    > 0 ? matches    : (allSeasons[name]?.partidos   || []),
+        jugadores:     players.length    > 0 ? players    : (allSeasons[name]?.jugadores  || []),
+        jugadoresTorneo: allSeasons[name]?.jugadoresTorneo || [],
+        jugadoresCopa:   allSeasons[name]?.jugadoresCopa   || [],
+      };
     }
 
     sheetsLoaded = true;
