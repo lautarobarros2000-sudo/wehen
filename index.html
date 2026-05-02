@@ -688,19 +688,31 @@ function extractSeasonSummary(rows) {
   let torneoPos = '—', copaNombre = 'Copa', copaPos = '—';
   let tablaTorneo = [], tablaCopa = [];
   let inTablaTorneo = false, inTablaCopa = false;
-  let foundTorneo = false;
+  let afterTorneoHeader = false, afterCopaHeader = false;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const r0 = (row[0] || '').trim();
     const r7 = (row[7] || '').trim();
-    const r20 = (row[20] || '').trim();
 
-    // Header row with season name and stats
-    // Format: VS,Resultado,,Goles,Asist,Sede,,APERTURA XX,PJ,PG,PP,PE,GF,GC,PTS,,,,,,TORNEO+COPA,PJ,PG,PP,PE,GF,GC,PTS
-    if (r0 === 'VS' && r7 && /APERTURA|CLAUSURA/.test(r7)) {
+    // VS header row — next data row has the stats
+    if (r0 === 'VS') {
+      if (/COPA|SUPER/.test(r7)) {
+        copaNombre = r7;
+        afterCopaHeader = true;
+        afterTorneoHeader = false;
+      } else if (/APERTURA|CLAUSURA/.test(r7)) {
+        afterTorneoHeader = true;
+        afterCopaHeader = false;
+      }
+      continue;
+    }
+
+    // First data row after torneo header has stats in cols 8-14 (torneo) and 21-27 (total)
+    if (afterTorneoHeader && r0) {
+      afterTorneoHeader = false;
       torneoRes = {
-        pj: parseInt(row[8])||0, pg: parseInt(row[9])||0,
+        pj: parseInt(row[8])||0,  pg: parseInt(row[9])||0,
         pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
         gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
       };
@@ -709,24 +721,22 @@ function extractSeasonSummary(rows) {
         pp: parseInt(row[23])||0, pe: parseInt(row[24])||0,
         gf: parseInt(row[25])||0, gc: parseInt(row[26])||0, pts: parseInt(row[27])||0
       };
-      foundTorneo = true;
     }
 
-    // Copa header row
-    // Format: VS,Resultado,,Goles,Asist,Sede,,COPA DE X,PJ,PG,PP,PE,GF,GC,PTS
-    if (r0 === 'VS' && r7 && /COPA|SUPER/.test(r7)) {
-      copaNombre = r7;
+    // First data row after copa header has stats in cols 8-14
+    if (afterCopaHeader && r0) {
+      afterCopaHeader = false;
       copaRes = {
-        pj: parseInt(row[8])||0, pg: parseInt(row[9])||0,
+        pj: parseInt(row[8])||0,  pg: parseInt(row[9])||0,
         pp: parseInt(row[10])||0, pe: parseInt(row[11])||0,
         gf: parseInt(row[12])||0, gc: parseInt(row[13])||0, pts: parseInt(row[14])||0
       };
     }
 
-    // Position rows: "Posición ,11vo" or "Posición ,6to"
+    // Position row: "Posición ,11vo"
     if (/^Posición/.test(r0)) {
       const pos = (row[1] || '').trim();
-      if (!torneoPos || torneoPos === '—') torneoPos = pos;
+      if (torneoPos === '—') torneoPos = pos;
       else copaPos = pos;
     }
 
@@ -741,23 +751,17 @@ function extractSeasonSummary(rows) {
     if (inTablaTorneo) {
       const pos = (row[1]||'').trim();
       const equipo = (row[2]||'').trim();
-      const pts = parseInt(row[3])||0;
       if (pos && /^\d+$/.test(pos) && equipo) {
-        tablaTorneo.push({ pos: parseInt(pos), equipo, pts, esWehen: equipo === 'Wehen' });
-      } else if (pos && !/^\d+$/.test(pos)) {
-        inTablaTorneo = false;
-      }
+        tablaTorneo.push({ pos: parseInt(pos), equipo, pts: parseInt(row[3])||0, esWehen: equipo === 'Wehen' });
+      } else if (pos && !/^\d+$/.test(pos)) { inTablaTorneo = false; }
     }
 
     if (inTablaCopa) {
       const pos = (row[1]||'').trim();
       const equipo = (row[2]||'').trim();
-      const pts = parseInt(row[3])||0;
       if (pos && /^\d+$/.test(pos) && equipo) {
-        tablaCopa.push({ pos: parseInt(pos), equipo, pts, esWehen: equipo === 'Wehen' });
-      } else if (pos && !/^\d+$/.test(pos)) {
-        inTablaCopa = false;
-      }
+        tablaCopa.push({ pos: parseInt(pos), equipo, pts: parseInt(row[3])||0, esWehen: equipo === 'Wehen' });
+      } else if (pos && !/^\d+$/.test(pos)) { inTablaCopa = false; }
     }
   }
 
@@ -803,20 +807,43 @@ function extractMatches(rows) {
   return matches;
 }
 
-// Parse glosario for player nicknames and positions
+// Parse glosario - structure:
+// Cols 0-11:  Torneo (Nro, Nombre, Apellido, PJ, G, A, VI, Tit, Sup, Exp, Apodo, Posición)
+// Cols 14-23: Copa   (Nro, Nombre, Apellido, PJ, G, A, VI, Tit, Sup, Exp, Apodo)
+// Cols 27-36: General/Total histórico (Nro, Nombre, Apellido, PJ, G, A, VI, Tit, Sup, Exp)
 function extractGlosario(rows) {
   const map = {};
+  const players = [];
+
   for (const row of rows) {
-    const nro = row[0]?.trim();
-    const nombre = row[1]?.trim();
-    const apellido = row[2]?.trim();
-    const apodo = row[10]?.trim() || '';
+    const nro = (row[0] || '').trim();
+    const nombre = (row[1] || '').trim();
+    const apellido = (row[2] || '').trim();
     if (!nro || !nombre || !apellido) continue;
     if (!/^(EX\s+)?\d+$/.test(nro)) continue;
-    const key = `${nombre.trim()}|${apellido.trim()}`;
-    map[key] = { apodo };
+
+    const apodo = (row[10] || '').trim();
+    const pos   = (row[11] || '').trim();
+    const ex    = nro.startsWith('EX');
+    const numMatch = nro.match(/\d+/);
+    const num   = numMatch ? parseInt(numMatch[0]) : 0;
+
+    // General stats from cols 27-36
+    const pj  = parseInt(row[30]) || 0;
+    const g   = parseInt(row[31]) || 0;
+    const a   = parseInt(row[32]) || 0;
+    const vi  = parseInt(row[33]) || 0;
+    const tit = parseInt(row[34]) || 0;
+    const sup = parseInt(row[35]) || 0;
+    const exp = parseInt(row[36]) || 0;
+
+    const key = `${nombre}|${apellido}`;
+    map[key] = { apodo, pos };
+
+    players.push({ num, nombre, apellido, ex, apodo, pos, pj, g, a, vi, tit, sup, exp,
+      temporadas: [], golesXtemp: [] });
   }
-  return map;
+  return { map, players };
 }
 
 // ===== LOAD DATA FROM SHEETS =====
@@ -826,9 +853,16 @@ let glosarioMap = {};
 async function loadAllSheets() {
   showLoading(true);
   try {
-    // Load glosario
-    const glosario = await fetchSheet(SHEET_GIDS.glosario);
-    glosarioMap = extractGlosario(glosario);
+    // Load glosario — source of truth for players and historical totals
+    const glosarioRows = await fetchSheet(SHEET_GIDS.glosario);
+    const { map: glosMap, players: glosPlayers } = extractGlosario(glosarioRows);
+    glosarioMap = glosMap;
+
+    // Replace playersData with live data from glosario
+    if (glosPlayers.length > 0) {
+      playersData.length = 0;
+      glosPlayers.forEach(p => playersData.push(p));
+    }
 
     // Load each season
     const sheetKeys = [
@@ -866,13 +900,6 @@ async function loadAllSheets() {
         };
       }
     }
-
-    // Enrich players with apodos from glosario
-    playersData.forEach(p => {
-      const key = `${p.nombre}|${p.apellido}`;
-      const g = glosarioMap[key];
-      if (g) p.apodo = g.apodo;
-    });
 
     sheetsLoaded = true;
     buildSeasonGrid();
