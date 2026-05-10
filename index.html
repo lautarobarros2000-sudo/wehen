@@ -391,65 +391,15 @@
 
   <div class="section-gap"></div>
   <div class="label">Top goleadores históricos</div>
-  <div class="podium-row">
-    <div class="podium-card p1">
-      <div class="podium-badge">1° Lugar</div>
-      <div class="podium-avatar">FL</div>
-      <div class="podium-name">Francisco Leveratto</div>
-      <div class="podium-val">46</div>
-      <div class="podium-unit">goles</div>
-    </div>
-    <div class="podium-card p2">
-      <div class="podium-badge">2° Lugar</div>
-      <div class="podium-avatar">FE</div>
-      <div class="podium-name">Federico Espasandín</div>
-      <div class="podium-val">16</div>
-      <div class="podium-unit">goles</div>
-    </div>
-    <div class="podium-card p3">
-      <div class="podium-badge">3° Lugar</div>
-      <div class="podium-avatar">BF</div>
-      <div class="podium-name">Bruno Fabrichini</div>
-      <div class="podium-val">11</div>
-      <div class="podium-unit">goles</div>
-    </div>
-  </div>
+  <div id="podium-goles" class="podium-row"></div>
 
   <div class="section-gap"></div>
   <div class="label">Top asistidores históricos</div>
-  <div class="podium-row">
-    <div class="podium-card p1">
-      <div class="podium-badge">1° Lugar</div>
-      <div class="podium-avatar">FE</div>
-      <div class="podium-name">Federico Espasandín</div>
-      <div class="podium-val">22</div>
-      <div class="podium-unit">asistencias</div>
-    </div>
-    <div class="podium-card p2">
-      <div class="podium-badge">2° Lugar</div>
-      <div class="podium-avatar">FL</div>
-      <div class="podium-name">Francisco Leveratto</div>
-      <div class="podium-val">14</div>
-      <div class="podium-unit">asistencias</div>
-    </div>
-    <div class="podium-card p3">
-      <div class="podium-badge">3° Lugar</div>
-      <div class="podium-avatar">NL</div>
-      <div class="podium-name">Nicolás Lombardero</div>
-      <div class="podium-val">11</div>
-      <div class="podium-unit">asistencias</div>
-    </div>
-  </div>
+  <div id="podium-asist" class="podium-row"></div>
 
   <div class="section-gap"></div>
   <div class="label">Más partidos jugados</div>
-  <div class="metrics-row">
-    <div class="metric-card"><div class="metric-val">70</div><div class="metric-name">V. Lo Faro</div><div class="metric-sub">partidos</div></div>
-    <div class="metric-card"><div class="metric-val">70</div><div class="metric-name">B. Fabrichini</div><div class="metric-sub">partidos</div></div>
-    <div class="metric-card"><div class="metric-val">69</div><div class="metric-name">J. Lagache</div><div class="metric-sub">partidos</div></div>
-    <div class="metric-card"><div class="metric-val">69</div><div class="metric-name">F. Leveratto</div><div class="metric-sub">partidos</div></div>
-    <div class="metric-card"><div class="metric-val">63</div><div class="metric-name">N. Lombardero</div><div class="metric-sub">partidos</div></div>
-  </div>
+  <div id="metrics-partidos" class="metrics-row"></div>
 
   <div class="section-gap"></div>
   <div class="label">Goles por temporada</div>
@@ -944,6 +894,7 @@ function updateHomePage() {
       totalPTS += s.resumen.pts || 0;
     }
   });
+
   const recBar = document.querySelector('.record-bar');
   if (recBar) {
     recBar.innerHTML = `
@@ -962,6 +913,97 @@ function updateHomePage() {
       <div class="record-item"><div class="record-num c-gold">${totalPTS}</div><div class="record-lbl">Puntos</div></div>
     `;
   }
+
+  // Build podiums and metrics from playersData (loaded from Glosario)
+  if (playersData.length === 0) return;
+
+  const podiumHTML = (top3, stat, unit) => top3.map((p, i) => {
+    const cls = ['p1','p2','p3'][i];
+    const lbl = ['1° Lugar','2° Lugar','3° Lugar'][i];
+    const initials = (p.nombre[0] + (p.apellido?.[0]||'')).toUpperCase();
+    const val = stat === 'g' ? p.g : stat === 'a' ? p.a : p.pj;
+    return `<div class="podium-card ${cls}">
+      <div class="podium-badge">${lbl}</div>
+      <div class="podium-avatar">${initials}</div>
+      <div class="podium-name">${p.nombre} ${p.apellido}</div>
+      <div class="podium-val">${val}</div>
+      <div class="podium-unit">${unit}</div>
+    </div>`;
+  }).join('');
+
+  // Top goleadores
+  const topGoles = [...playersData].sort((a,b) => b.g - a.g).slice(0,3);
+  const podGoles = document.getElementById('podium-goles');
+  if (podGoles) podGoles.innerHTML = podiumHTML(topGoles, 'g', 'goles');
+
+  // Top asistidores
+  const topAsist = [...playersData].sort((a,b) => b.a - a.a).slice(0,3);
+  const podAsist = document.getElementById('podium-asist');
+  if (podAsist) podAsist.innerHTML = podiumHTML(topAsist, 'a', 'asistencias');
+
+  // Más partidos
+  const topPJ = [...playersData].sort((a,b) => b.pj - a.pj).slice(0,5);
+  const metPJ = document.getElementById('metrics-partidos');
+  if (metPJ) metPJ.innerHTML = topPJ.map(p =>
+    `<div class="metric-card">
+      <div class="metric-val">${p.pj}</div>
+      <div class="metric-name">${p.nombre[0]}. ${p.apellido}</div>
+      <div class="metric-sub">partidos</div>
+    </div>`
+  ).join('');
+
+  // Update charts with live season data
+  updateCharts();
+}
+
+function updateCharts() {
+  const seasonKeys = ['Apertura 2023','Clausura 2023','Apertura 2024','Clausura 2024','Apertura 2025','Clausura 2025','Apertura 2026'];
+  const labels = ['Ap.23','Cl.23','Ap.24','Cl.24','Ap.25','Cl.25','Ap.26'];
+  const gf = seasonKeys.map(k => allSeasons[k]?.resumen?.gf || 0);
+  const gc = seasonKeys.map(k => allSeasons[k]?.resumen?.gc || 0);
+  const pts = seasonKeys.map(k => allSeasons[k]?.resumen?.pts || 0);
+
+  if (window.chart1Instance) window.chart1Instance.destroy();
+  if (window.chart2Instance) window.chart2Instance.destroy();
+
+  window.chart1Instance = new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'GF', data: gf, backgroundColor: '#C41E3A' },
+        { label: 'GC', data: gc, backgroundColor: '#333' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } },
+        y: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } }
+      }
+    }
+  });
+
+  window.chart2Instance = new Chart(document.getElementById('chart2'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Puntos', data: pts,
+        borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)',
+        pointBackgroundColor: '#C9A84C', pointRadius: 5, tension: 0.3, fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } },
+        y: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } }
+      }
+    }
+  });
 }
 
 function showPage(id, el) {
@@ -1341,51 +1383,7 @@ document.getElementById('season-detail-area').innerHTML = renderSeasonDetail('Ap
 // Load live data from Google Sheets
 loadAllSheets();
 
-const seasons = ['Ap. 2023','Cl. 2023','Ap. 2024','Cl. 2024','Ap. 2025','Cl. 2025','Ap. 2026'];
 
-new Chart(document.getElementById('chart1'), {
-  type: 'bar',
-  data: {
-    labels: seasons,
-    datasets: [
-      { label: 'GF', data: [23, 22, 25, 21, 28, 19, 15], backgroundColor: '#C41E3A' },
-      { label: 'GC', data: [38, 20, 24, 22, 18, 17, 18], backgroundColor: '#333' }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } },
-      y: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } }
-    }
-  }
-});
-
-new Chart(document.getElementById('chart2'), {
-  type: 'line',
-  data: {
-    labels: seasons,
-    datasets: [{
-      label: 'Puntos',
-      data: [8, 15, 18, 14, 20, 12, 12],
-      borderColor: '#C9A84C',
-      backgroundColor: 'rgba(201,168,76,0.08)',
-      pointBackgroundColor: '#C9A84C',
-      pointRadius: 5,
-      tension: 0.3,
-      fill: true
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } },
-      y: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: '#1e1e1e' } }
-    }
-  }
-});
 
 
 
