@@ -449,22 +449,19 @@ if ('serviceWorker' in navigator) {
   <div id="metrics-partidos"></div>
 
   <div class="section-gap"></div>
-  <div class="label">Goles por temporada</div>
-  <div class="chart-card">
-    <div class="chart-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#C41E3A"></div>Goles a favor</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#3a3a3a"></div>Goles en contra</div>
-    </div>
-    <div style="position:relative; height:220px;">
-      <canvas id="chart1" role="img" aria-label="Goles por temporada">Goles a favor y en contra por temporada.</canvas>
-    </div>
-  </div>
-
-  <div class="section-gap"></div>
-  <div class="label">Rendimiento por temporada</div>
-  <div class="chart-card">
-    <div style="position:relative; height:200px;">
-      <canvas id="chart2" role="img" aria-label="Rendimiento por temporada">Puntos por temporada.</canvas>
+  <div class="label">Palmarés</div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div style="background:linear-gradient(135deg,#1a1200,#2a1e00);border:1px solid var(--gold);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:20px;">
+      <div style="font-size:48px;flex-shrink:0;">🏆</div>
+      <div>
+        <div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Apertura 2024</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;color:#fff;">Copa de Oro</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">Liga Vasco Germana · Categoría B1</div>
+      </div>
+      <div style="margin-left:auto;text-align:center;flex-shrink:0;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--gold);line-height:1;">1</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">título</div>
+      </div>
     </div>
   </div>
 
@@ -997,7 +994,7 @@ function updateHomePage() {
   }
 
   // Update charts with live season data
-  updateCharts();
+  // Charts removed - palmares section added instead
 }
 
 function updateCharts() {
