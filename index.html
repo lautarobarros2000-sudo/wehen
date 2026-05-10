@@ -1278,28 +1278,74 @@ function renderStatsCards(res) {
   </div>`;
 }
 
+let _tableSortCol = null;
+let _tableSortAsc = false;
+let _tableJugadores = [];
+
 function renderPlayersTable(jugadores) {
   if (!jugadores || jugadores.length === 0) return '';
+  _tableJugadores = jugadores;
+  _tableSortCol = null;
+  _tableSortAsc = false;
   return `
     <div class="label">Estadísticas de jugadores</div>
     <div class="table-wrap" style="margin-bottom:20px;">
-      <table class="stats-table">
+      <table class="stats-table" id="season-players-table">
         <thead><tr>
-          <th style="text-align:left">Jugador</th>
-          <th>PJ</th><th>G</th><th>A</th><th>Tit.</th><th>Sup.</th><th>Exp.</th>
+          <th style="text-align:left;cursor:default;">Jugador</th>
+          ${[['pj','PJ'],['g','G'],['a','A'],['tit','Tit.'],['sup','Sup.'],['exp','Exp.']].map(([col,label]) => `
+            <th onclick="sortPlayersTable('${col}')" style="cursor:pointer;user-select:none;" id="th-${col}">
+              ${label} <span style="font-size:9px;color:var(--text3);margin-left:2px;" id="sort-icon-${col}">↕</span>
+            </th>`).join('')}
         </tr></thead>
-        <tbody>
-          ${jugadores.map((j,i) => `
-            <tr>
-              <td><span class="rank-num">#${i+1}</span>${j.nombre} ${j.apellido||''}</td>
-              <td>${j.pj}</td>
-              <td class="${j.g>0?'hi-red':''}">${j.g}</td>
-              <td class="${j.a>0?'hi-gold':''}">${j.a}</td>
-              <td>${j.tit}</td><td>${j.sup}</td><td>${j.exp||0}</td>
-            </tr>`).join('')}
+        <tbody id="season-players-tbody">
+          ${buildPlayerRows(jugadores)}
         </tbody>
       </table>
     </div>`;
+}
+
+function buildPlayerRows(jugadores) {
+  return jugadores.map((j, i) => `
+    <tr>
+      <td><span class="rank-num">#${i+1}</span>${j.nombre} ${j.apellido||''}</td>
+      <td>${j.pj}</td>
+      <td class="${j.g>0?'hi-red':''}">${j.g}</td>
+      <td class="${j.a>0?'hi-gold':''}">${j.a}</td>
+      <td>${j.tit}</td><td>${j.sup}</td><td>${j.exp||0}</td>
+    </tr>`).join('');
+}
+
+function sortPlayersTable(col) {
+  if (_tableSortCol === col) {
+    _tableSortAsc = !_tableSortAsc;
+  } else {
+    _tableSortCol = col;
+    _tableSortAsc = false; // default: desc (highest first)
+  }
+
+  // Reset all icons
+  ['pj','g','a','tit','sup','exp'].forEach(c => {
+    const el = document.getElementById('sort-icon-' + c);
+    if (el) el.textContent = '↕';
+    const th = document.getElementById('th-' + c);
+    if (th) th.style.color = '';
+  });
+
+  // Set active icon
+  const activeIcon = document.getElementById('sort-icon-' + col);
+  if (activeIcon) activeIcon.textContent = _tableSortAsc ? '↑' : '↓';
+  const activeTh = document.getElementById('th-' + col);
+  if (activeTh) activeTh.style.color = 'var(--gold)';
+
+  const sorted = [..._tableJugadores].sort((a, b) => {
+    const va = a[col] || 0;
+    const vb = b[col] || 0;
+    return _tableSortAsc ? va - vb : vb - va;
+  });
+
+  const tbody = document.getElementById('season-players-tbody');
+  if (tbody) tbody.innerHTML = buildPlayerRows(sorted);
 }
 
 function renderMatchesList(partidos, tipo) {
