@@ -991,7 +991,10 @@ function updateHomePage() {
   // Más partidos — podium top 3 only
   const topPJ = [...playersData].sort((a,b) => b.pj - a.pj).slice(0,3);
   const metPJ = document.getElementById('metrics-partidos');
-  if (metPJ) metPJ.innerHTML = podiumHTML(topPJ, 'pj', 'partidos');
+  if (metPJ) {
+    metPJ.className = 'podium-row';
+    metPJ.innerHTML = podiumHTML(topPJ, 'pj', 'partidos');
+  }
 
   // Update charts with live season data
   updateCharts();
