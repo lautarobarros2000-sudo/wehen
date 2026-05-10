@@ -785,6 +785,8 @@ function extractMatches(rows) {
   const matches = [];
   let currentTipo = 'Torneo';
   let inMatchSection = false;
+  let pendingIda = null;
+  let currentFase = null;
 
   for (const row of rows) {
     const r0 = (row[0] || '').trim();
@@ -792,30 +794,48 @@ function extractMatches(rows) {
     const r2 = (row[2] || '').trim();
     const r7 = (row[7] || '').trim();
 
-    // VS header row — starts a match section and tells us torneo or copa
     if (r0 === 'VS') {
       inMatchSection = true;
       if (/COPA|SUPER/.test(r7)) currentTipo = 'Copa';
       else if (/APERTURA|CLAUSURA/.test(r7)) currentTipo = 'Torneo';
+      pendingIda = null; currentFase = null;
       continue;
     }
 
     if (!inMatchSection) continue;
-    if (/^TABLA|^Posición|^GLOBAL|^LIBRE$/.test(r0) || !r0) continue;
+    if (/^TABLA|^Posición|^LIBRE$/.test(r0) || !r0) continue;
 
-    // Match with result
+    // GLOBAL row — closes a two-leg tie
+    if (r0 === 'GLOBAL' && pendingIda) {
+      pendingIda.globalGF = parseInt(r1) || 0;
+      pendingIda.globalGC = parseInt(r2) || 0;
+      matches.push(pendingIda);
+      pendingIda = null;
+      continue;
+    }
+
     if (r1 !== '' && r2 !== '' && !isNaN(parseInt(r1)) && !isNaN(parseInt(r2))) {
-      matches.push({
-        rival: r0, tipo: currentTipo,
-        gf: parseInt(r1), gc: parseInt(r2),
-        goles: (row[3] || '').trim() || '—',
-        asist: (row[4] || '').trim() || '—',
-        pendiente: false
-      });
+      const fase = r7 || currentFase || '';
+      if (fase) currentFase = fase;
+
+      if (currentTipo === 'Copa') {
+        if (pendingIda && pendingIda.rival === r0) {
+          // This is the vuelta
+          pendingIda.vuelta = { gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—' };
+          if (fase) pendingIda.fase = fase;
+        } else {
+          if (pendingIda) matches.push(pendingIda);
+          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase };
+        }
+      } else {
+        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase });
+      }
     } else if (r1 === '' || r1 === '-' || r1 === '–') {
-      matches.push({ rival: r0, tipo: currentTipo, pendiente: true });
+      if (pendingIda) { matches.push(pendingIda); pendingIda = null; }
+      matches.push({ rival: r0, tipo: currentTipo, pendiente: true, fase: currentFase });
     }
   }
+  if (pendingIda) matches.push(pendingIda);
   return matches;
 }
 
@@ -1356,6 +1376,37 @@ function renderMatchesList(partidos, tipo) {
     <div class="label">Partidos</div>
     <div class="match-list">
       ${filtered.map(p => {
+        // Two-leg tie
+        if (p.vuelta) {
+          const gW = p.globalGF > p.globalGC, gD = p.globalGF === p.globalGC;
+          const gCls = gW ? 's-w' : gD ? 's-d' : 's-l';
+          const iCls = p.gf > p.gc ? 's-w' : p.gf === p.gc ? 's-d' : 's-l';
+          const vCls = p.vuelta.gf > p.vuelta.gc ? 's-w' : p.vuelta.gf === p.vuelta.gc ? 's-d' : 's-l';
+          return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+            <div style="background:var(--bg3);padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);">
+              <span class="match-badge copa">Copa</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text);">Wehen vs ${p.rival}</span>
+              ${p.fase ? `<span style="font-size:10px;color:var(--text3);margin-left:auto;">${p.fase}</span>` : ''}
+            </div>
+            <div style="padding:8px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a;">
+              <span style="font-size:10px;color:var(--text3);width:50px;flex-shrink:0;">IDA</span>
+              <div class="${iCls}" style="font-family:'Bebas Neue',sans-serif;font-size:16px;min-width:44px;text-align:center;">${p.gf} - ${p.gc}</div>
+              <div class="match-scorers">${p.goles}</div>
+            </div>
+            <div style="padding:8px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a;">
+              <span style="font-size:10px;color:var(--text3);width:50px;flex-shrink:0;">VUELTA</span>
+              <div class="${vCls}" style="font-family:'Bebas Neue',sans-serif;font-size:16px;min-width:44px;text-align:center;">${p.vuelta.gf} - ${p.vuelta.gc}</div>
+              <div class="match-scorers">${p.vuelta.goles}</div>
+            </div>
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:12px;background:${gW?'rgba(74,222,128,0.06)':gD?'rgba(250,204,21,0.06)':'rgba(196,30,58,0.06)'};">
+              <span style="font-size:10px;font-weight:600;color:var(--text3);width:50px;flex-shrink:0;">GLOBAL</span>
+              <div class="${gCls}" style="font-family:'Bebas Neue',sans-serif;font-size:18px;min-width:44px;text-align:center;">${p.globalGF} - ${p.globalGC}</div>
+              <div style="font-size:11px;font-weight:600;color:${gW?'var(--win)':gD?'var(--draw)':'var(--red)'};">${gW?'✓ CLASIFICADO':gD?'— EMPATE':'✗ ELIMINADO'}</div>
+            </div>
+          </div>`;
+        }
+
+        // Regular match
         const sc = p.pendiente ? '' : p.gf > p.gc ? 's-w' : p.gf === p.gc ? 's-d' : 's-l';
         return `<div class="match-row">
           <span class="match-badge ${p.tipo==='Copa'?'copa':''}">${p.tipo}</span>
