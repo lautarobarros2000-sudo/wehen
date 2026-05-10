@@ -988,38 +988,10 @@ function updateHomePage() {
   const podAsist = document.getElementById('podium-asist');
   if (podAsist) podAsist.innerHTML = podiumHTML(topAsist, 'a', 'asistencias');
 
-  // Más partidos — podium top 3 + 2 extra below
-  const topPJ = [...playersData].sort((a,b) => b.pj - a.pj).slice(0,5);
+  // Más partidos — podium top 3 only
+  const topPJ = [...playersData].sort((a,b) => b.pj - a.pj).slice(0,3);
   const metPJ = document.getElementById('metrics-partidos');
-  if (metPJ) {
-    const top3 = topPJ.slice(0,3);
-    const rest = topPJ.slice(3);
-    metPJ.innerHTML = `
-      <div class="podium-row" style="margin-bottom:10px;">
-        ${top3.map((p, i) => {
-          const cls = ['p1','p2','p3'][i];
-          const lbl = ['1° Lugar','2° Lugar','3° Lugar'][i];
-          const initials = (p.nombre[0] + (p.apellido?.[0]||'')).toUpperCase();
-          return `<div class="podium-card ${cls}">
-            <div class="podium-badge">${lbl}</div>
-            <div class="podium-avatar">${initials}</div>
-            <div class="podium-name">${p.nombre} ${p.apellido}</div>
-            <div class="podium-val">${p.pj}</div>
-            <div class="podium-unit">partidos</div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        ${rest.map(p => `
-          <div class="metric-card" style="display:flex;align-items:center;gap:12px;text-align:left;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0;">${(p.nombre[0]+(p.apellido?.[0]||'')).toUpperCase()}</div>
-            <div>
-              <div style="font-size:13px;font-weight:500;">${p.nombre} ${p.apellido}</div>
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);line-height:1;">${p.pj} <span style="font-size:11px;color:var(--text3);font-family:'DM Sans',sans-serif;">partidos</span></div>
-            </div>
-          </div>`).join('')}
-      </div>`;
-  }
+  if (metPJ) metPJ.innerHTML = podiumHTML(topPJ, 'pj', 'partidos');
 
   // Update charts with live season data
   updateCharts();
