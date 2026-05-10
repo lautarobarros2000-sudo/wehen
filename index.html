@@ -1308,9 +1308,9 @@ function renderPlayersTable(jugadores) {
 }
 
 function buildPlayerRows(jugadores) {
-  return jugadores.map((j, i) => `
+  return jugadores.map((j) => `
     <tr>
-      <td><span class="rank-num">#${i+1}</span>${j.nombre} ${j.apellido||''}</td>
+      <td><span class="rank-num">#${j.num}</span>${j.nombre} ${j.apellido||''}</td>
       <td>${j.pj}</td>
       <td class="${j.g>0?'hi-red':''}">${j.g}</td>
       <td class="${j.a>0?'hi-gold':''}">${j.a}</td>
