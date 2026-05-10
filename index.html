@@ -493,12 +493,13 @@ if ('serviceWorker' in navigator) {
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <select id="player-sort" onchange="renderPlayers()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">
         <option value="num">Nº de camiseta</option>
-        <option value="pj">Más partidos</option>
-        <option value="goles">Más goles</option>
-        <option value="asist">Más asistencias</option>
-        <option value="exp">Más expulsiones</option>
-        <option value="tit">Más titularidades</option>
+        <option value="pj">Partidos jugados</option>
+        <option value="goles">Goles</option>
+        <option value="asist">Asistencias</option>
+        <option value="exp">Expulsiones</option>
+        <option value="tit">Titularidades</option>
       </select>
+      <button id="player-sort-dir" onclick="toggleSortDir()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;line-height:1;" title="Invertir orden">↓</button>
     </div>
   </div>
   <div id="players-grid" class="player-grid"></div>
@@ -1566,16 +1567,28 @@ function getInitials(p) {
 
 let pmChart = null;
 
+let playerSortAsc = false;
+
+function toggleSortDir() {
+  playerSortAsc = !playerSortAsc;
+  const btn = document.getElementById('player-sort-dir');
+  if (btn) btn.textContent = playerSortAsc ? '↑' : '↓';
+  renderPlayers();
+}
+
 function renderPlayers() {
   const sort = document.getElementById('player-sort').value;
+  const asc = playerSortAsc;
   const sorted = [...playersData].sort((a, b) => {
-    if (sort === 'num')   return a.num - b.num;
-    if (sort === 'pj')    return b.pj - a.pj;
-    if (sort === 'goles') return b.g - a.g;
-    if (sort === 'asist') return b.a - a.a;
-    if (sort === 'exp')   return b.exp - a.exp;
-    if (sort === 'tit')   return b.tit - a.tit;
-    return a.num - b.num;
+    let va, vb;
+    if (sort === 'num')   { va = a.num;  vb = b.num;  }
+    else if (sort === 'pj')    { va = a.pj;  vb = b.pj;  }
+    else if (sort === 'goles') { va = a.g;   vb = b.g;   }
+    else if (sort === 'asist') { va = a.a;   vb = b.a;   }
+    else if (sort === 'exp')   { va = a.exp; vb = b.exp; }
+    else if (sort === 'tit')   { va = a.tit; vb = b.tit; }
+    else { va = a.num; vb = b.num; }
+    return asc ? va - vb : vb - va;
   });
 
   const grid = document.getElementById('players-grid');
