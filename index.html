@@ -1285,21 +1285,23 @@ let _tableJugadores = [];
 function renderPlayersTable(jugadores) {
   if (!jugadores || jugadores.length === 0) return '';
   _tableJugadores = jugadores;
-  _tableSortCol = null;
-  _tableSortAsc = false;
+  _tableSortCol = 'num';
+  _tableSortAsc = true;
   return `
     <div class="label">Estadísticas de jugadores</div>
     <div class="table-wrap" style="margin-bottom:20px;">
       <table class="stats-table" id="season-players-table">
         <thead><tr>
-          <th style="text-align:left;cursor:default;">Jugador</th>
+          <th onclick="sortPlayersTable('num')" style="text-align:left;cursor:pointer;user-select:none;" id="th-num">
+            Jugador <span style="font-size:9px;color:var(--gold);margin-left:2px;" id="sort-icon-num">↑</span>
+          </th>
           ${[['pj','PJ'],['g','G'],['a','A'],['tit','Tit.'],['sup','Sup.'],['exp','Exp.']].map(([col,label]) => `
             <th onclick="sortPlayersTable('${col}')" style="cursor:pointer;user-select:none;" id="th-${col}">
               ${label} <span style="font-size:9px;color:var(--text3);margin-left:2px;" id="sort-icon-${col}">↕</span>
             </th>`).join('')}
         </tr></thead>
         <tbody id="season-players-tbody">
-          ${buildPlayerRows(jugadores)}
+          ${buildPlayerRows([...jugadores].sort((a,b) => (a.num||0) - (b.num||0)))}
         </tbody>
       </table>
     </div>`;
@@ -1321,11 +1323,11 @@ function sortPlayersTable(col) {
     _tableSortAsc = !_tableSortAsc;
   } else {
     _tableSortCol = col;
-    _tableSortAsc = false; // default: desc (highest first)
+    _tableSortAsc = col === 'num'; // num sorts asc by default, stats desc
   }
 
   // Reset all icons
-  ['pj','g','a','tit','sup','exp'].forEach(c => {
+  ['num','pj','g','a','tit','sup','exp'].forEach(c => {
     const el = document.getElementById('sort-icon-' + c);
     if (el) el.textContent = '↕';
     const th = document.getElementById('th-' + c);
