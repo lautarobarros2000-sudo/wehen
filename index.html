@@ -564,8 +564,6 @@ if ('serviceWorker' in navigator) {
       <div id="pm-detail" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px;"></div>
       <div class="label">Temporadas</div>
       <div id="pm-seasons" style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;"></div>
-      <div class="label">Evolución de goles</div>
-      <div style="position:relative;height:160px;"><canvas id="pm-chart"></canvas></div>
     </div>
   </div>
 </div>
@@ -1671,16 +1669,21 @@ function openPlayerModal(num, apellido) {
   const p = playersData.find(x => x.num === num && x.apellido === apellido);
   if (!p) return;
 
-  document.getElementById('pm-avatar').textContent = getInitials(p);
   const pKey = `${p.nombre}|${p.apellido||''}`;
   const pApodo = p.apodo || apodosMap[pKey] || '';
   const pAwards = awardsMap[pKey] || [];
+
+  document.getElementById('pm-avatar').textContent = getInitials(p);
   document.getElementById('pm-name').textContent = `${p.nombre} ${p.apellido}`;
   document.getElementById('pm-meta').innerHTML = `
     <span style="background:${posColors[p.pos]};color:${posTextColors[p.pos]};padding:2px 8px;border-radius:4px;font-size:10px;">${p.pos}</span>
     <span>#${p.num}</span>
     ${p.ex ? '<span style="background:#3a1010;color:var(--red);padding:2px 8px;border-radius:4px;font-size:10px;">EX JUGADOR</span>' : '<span style="background:#0a2a0a;color:#6adf8a;padding:2px 8px;border-radius:4px;font-size:10px;">ACTIVO</span>'}
+    ${pApodo ? `<span style="color:var(--gold);font-style:italic;font-size:12px;">"${pApodo}"</span>` : ''}
   `;
+
+  const gpj = p.pj > 0 ? (p.g/p.pj).toFixed(2) : '0.00';
+  const titPct = p.pj > 0 ? Math.round(p.tit/p.pj*100) : 0;
 
   document.getElementById('pm-stats').innerHTML = `
     <div class="metric-card"><div class="metric-val c-red" style="font-size:24px">${p.g}</div><div class="metric-sub">Goles</div></div>
@@ -1689,69 +1692,36 @@ function openPlayerModal(num, apellido) {
     <div class="metric-card"><div class="metric-val" style="font-size:24px;color:${p.exp>0?'var(--red)':'var(--text)'}">${p.exp}</div><div class="metric-sub">Expulsiones</div></div>
   `;
 
-  const gpj = p.pj > 0 ? (p.g/p.pj).toFixed(2) : '0.00';
-  const titPct = p.pj > 0 ? Math.round(p.tit/p.pj*100) : 0;
   document.getElementById('pm-detail').innerHTML = `
     <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.tit}</div><div class="metric-sub">Titularidades</div></div>
     <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.sup}</div><div class="metric-sub">Desde el banco</div></div>
     <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.vi}</div><div class="metric-sub">Vallas invictas</div></div>
     <div class="metric-card"><div class="metric-val c-red" style="font-size:20px">${gpj}</div><div class="metric-sub">Goles/partido</div></div>
     <div class="metric-card"><div class="metric-val" style="font-size:20px">${titPct}%</div><div class="metric-sub">% Titular</div></div>
-    <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.temporadas.length}</div><div class="metric-sub">Temporadas</div></div>
+    <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.temporadas?.length||0}</div><div class="metric-sub">Temporadas</div></div>
   `;
 
-    // Insert awards in modal
-  const existingAwards = document.getElementById('pm-awards-block');
-  if (existingAwards) existingAwards.remove();
-  if (pAwards.length > 0) {
-    const awardsDiv = document.createElement('div');
-    awardsDiv.id = 'pm-awards-block';
-    awardsDiv.style.cssText = 'margin:0 0 16px;padding:12px 14px;background:#1a1200;border:1px solid #3a2a00;border-radius:8px;';
-    awardsDiv.innerHTML = `<div style="font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">🏅 Wehen Awards</div>
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        ${pAwards.map(([yr,cat]) => `<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2);">${cat}</span><span style="color:var(--gold);font-weight:600;">${yr}</span></div>`).join('')}
-      </div>`;
-    document.getElementById('pm-seasons').before(awardsDiv);
-  }
-  document.getElementById('pm-seasons').innerHTML = p.temporadas.map((t, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:8px;padding:8px 12px;">
-      <div style="font-size:13px;font-weight:500;">${t}</div>
-      <div style="display:flex;gap:14px;">
-        <div style="text-align:center;"><div style="font-size:14px;font-weight:600;color:var(--red);">${p.golesXtemp[i]||0}</div><div style="font-size:9px;color:var(--text3);">G</div></div>
-      </div>
-    </div>
-  `).join('');
+  // Awards section (replacing Temporadas)
+  const awardsHTML = pAwards.length > 0
+    ? `<div class="label">Premios</div>
+       <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:20px;">
+         ${pAwards.map(([yr,cat]) => `
+           <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid #3a2a00;border-radius:8px;padding:8px 14px;">
+             <div style="font-size:13px;color:var(--text2);">${cat}</div>
+             <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--gold);">Awards ${yr}</div>
+           </div>`).join('')}
+       </div>`
+    : '';
 
-  // Chart
+  document.getElementById('pm-seasons').innerHTML = awardsHTML;
+
   if (pmChart) { pmChart.destroy(); pmChart = null; }
-  const ctx = document.getElementById('pm-chart');
-  pmChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: p.temporadas,
-      datasets: [{
-        label: 'Goles',
-        data: p.golesXtemp,
-        borderColor: '#C41E3A',
-        backgroundColor: 'rgba(196,30,58,0.1)',
-        pointBackgroundColor: '#C41E3A',
-        pointRadius: 5, tension: 0.3, fill: true
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#666', font: { size: 10 } }, grid: { color: '#1e1e1e' } },
-        y: { ticks: { color: '#666', font: { size: 10 } }, grid: { color: '#1e1e1e' }, beginAtZero: true }
-      }
-    }
-  });
 
   const modal = document.getElementById('player-modal');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
+
 
 function closePlayerModal() {
   document.getElementById('player-modal').style.display = 'none';
