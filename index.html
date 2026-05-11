@@ -639,22 +639,33 @@ async function fetchSheet(gid) {
 // Each tab has: Nro(A), Nombre(B), Apellido(C), ...Torneo stats..., COPA, ...Copa stats..., TOTAL, PJ(U), G(V), A(W), VI(X), Tit(Y), Sup(Z), Exp(AA)
 function extractPlayers(rows) {
   const players = [];
-  let inPlayerSection = false;
+
+  // Find TOTAL column index dynamically from header row
+  let totalIdx = 21; // default
+  if (rows[0]) {
+    const headerRow = rows[0];
+    for (let i = 0; i < headerRow.length; i++) {
+      if ((headerRow[i]||'').trim() === 'TOTAL') {
+        totalIdx = i + 1; // PJ is one column after TOTAL header
+        break;
+      }
+    }
+  }
+
   for (const row of rows) {
     const nro = row[0]?.trim();
     const nombre = row[1]?.trim();
     const apellido = row[2]?.trim();
-    // Detect player rows: first col is a number or "EX N"
     if (!nro || !nombre || !apellido) continue;
     if (!/^(EX\s+)?\d+$/.test(nro)) continue;
-    // TOTAL columns: index 21=PJ, 22=G, 23=A, 24=VI, 25=Tit, 26=Sup, 27=Exp
-    const pj  = parseInt(row[21]) || 0;
-    const g   = parseInt(row[22]) || 0;
-    const a   = parseInt(row[23]) || 0;
-    const vi  = parseInt(row[24]) || 0;
-    const tit = parseInt(row[25]) || 0;
-    const sup = parseInt(row[26]) || 0;
-    const exp = parseInt(row[27]) || 0;
+    // TOTAL columns start at totalIdx: PJ, G, A, VI, Tit, Sup, Exp
+    const pj  = parseInt(row[totalIdx])   || 0;
+    const g   = parseInt(row[totalIdx+1]) || 0;
+    const a   = parseInt(row[totalIdx+2]) || 0;
+    const vi  = parseInt(row[totalIdx+3]) || 0;
+    const tit = parseInt(row[totalIdx+4]) || 0;
+    const sup = parseInt(row[totalIdx+5]) || 0;
+    const exp = parseInt(row[totalIdx+6]) || 0;
     const ex  = nro.startsWith('EX');
     const numMatch = nro.match(/\d+/);
     const num = numMatch ? parseInt(numMatch[0]) : 0;
