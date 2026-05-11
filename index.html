@@ -1569,7 +1569,41 @@ function getInitials(p) {
 
 let pmChart = null;
 
-let playerSortAsc = false;
+// ===== APODOS & AWARDS =====
+const apodosMap = {
+  'Santiago|Camus':'Hacker','Juan Pablo|Ballestero':'Canario','Felipe|Valotta':'Disktk',
+  'Matías|Solodujo':'Guayo','Federico|Espasandín':'Toy','Valentín|Lo Faro':'Faro',
+  'Juan|Masco':'Damasco','Gerónimo|Macía':'Rayo','Federico|Campnay':'Toro del Oeste',
+  'Lautaro|Vivas':'Pibe','Francisco|Leveratto':'Capitán Silencioso','Joaquín|Rodríguez':'Pollo',
+  'Bruno|Fabrichini':'Flecha','Facundo|Castillo':'Indio','Valentín|Carballo':'Ballo',
+  'Lautaro|Barros':'Plancha','Lucas|Valotta':'Suertudo','Juan Pablo|Firpo':'Pocho',
+  'Nicolás|Penedo':'Samurai','Francisco|Alleno':'Tierno','Joaquín|Tiraboschi':'Rhino',
+  'Nicolás|Paglierino':'MagoPe','Santiago|Betular':'Betún','Gerónimo|Ciezar':'Ezeizar',
+  'Guido|Eugenio':'Foden','Thiago|Canteros':'Cachorro','Naquías|Guzmán':'Pelotudo',
+  'Tobías|Barthou':'Chute','Pablo|':'Pulpo Paul','Jerónimo|Pellicer':'Tanque',
+  'Manuel|Ferella':'Fiore','Joaquín|Paglierino':'Hechicero',
+};
+
+const awardsMap = {
+  'Francisco|Leveratto':    [['2023','🏅 Goleador'],['2024','🏅 Goleador'],['2024','⭐ AL'],['2025','🏅 Goleador'],['2025','🔴⚫ Rojinegro']],
+  'Federico|Espasandín':    [['2023','🎯 Asistidor'],['2024','🎯 Asistidor'],['2025','🎯 Asistidor'],['2025','❌ Fracaso del año']],
+  'Tomás|Paladino':         [['2023','⚽ Mejor gol'],['2024','🔴⚫ Rojinegro']],
+  'Valentín|Lo Faro':       [['2023','😂 Anécdota'],['2024','🦵 Mejor patada'],['2025','👕 Mejor prenda']],
+  'Felipe|Valotta':         [['2023','🥺 Tierno'],['2023','🦵 Mejor patada'],['2025','👻 Más fantasma']],
+  'Nicolás|Paglierino':     [['2023','👥 Jugador 12'],['2024','👥 Jugador 12'],['2025','🎬 Momento del año']],
+  'Nicolás|Penedo':         [['2023','🌟 Revelación']],
+  'Juan|Masco':             [['2023','🏷️ Mejor apodo'],['2024','👶 Sub 21']],
+  'Matías|Solodujo':        [['2023','🔴⚫ Rojinegro'],['2024','😂 Mejor anécdota']],
+  'Bruno|Fabrichini':       [['2024','🤦 Burrada del año'],['2025','🤦 Burrada del año']],
+  'Gerónimo|Macía':         [['2024','⚽ Mejor gol'],['2025','⚽ Mejor gol']],
+  'Javier|Lagache':         [['2024','🌟 Revelación'],['2025','🎟️ Mejor asistencia']],
+  'Francisco|Coviella':     [['2024','👗 Pollera']],
+  'Lucas|Valotta':          [['2024','🏆 MVP']],
+  'Joaquín|Tiraboschi':     [['2024','🏷️ Apodo']],
+  'Valentín|Carballo':      [['2025','💪 Mejor actuación']],
+  'Federico|Campnay':       [['2025','⭐ AL']],
+  'Thiago|Canteros':        [['2025','🏷️ Mejor apodo']],
+};
 
 function toggleSortDir() {
   playerSortAsc = !playerSortAsc;
@@ -1594,9 +1628,13 @@ function renderPlayers() {
   });
 
   const grid = document.getElementById('players-grid');
-  grid.innerHTML = sorted.map(p => `
-    <div class="player-card" onclick="openPlayerModal(${p.num},'${p.apellido.replace(/'/g,"\\'")}')">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+  grid.innerHTML = sorted.map(p => {
+    const key = `${p.nombre}|${p.apellido||''}`;
+    const apodo = p.apodo || apodosMap[key] || '';
+    const awards = awardsMap[key] || [];
+    return `
+    <div class="player-card" onclick="openPlayerModal(${p.num},'${(p.apellido||'').replace(/'/g,"\\'")}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:34px;height:34px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#fff;flex-shrink:0;${p.ex?'opacity:0.6':''}">${getInitials(p)}</div>
           <div>
@@ -1604,9 +1642,14 @@ function renderPlayers() {
             ${p.ex ? '<span style="font-size:9px;background:#3a1010;color:var(--red);padding:1px 5px;border-radius:3px;letter-spacing:0.5px;">EX</span>' : ''}
           </div>
         </div>
-        <span style="font-size:9px;padding:2px 7px;border-radius:4px;background:${posColors[p.pos]||'var(--bg3)'};color:${posTextColors[p.pos]||'var(--text3)'};">${p.pos}</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:4px;background:${posColors[p.pos]||'var(--bg3)'};color:${posTextColors[p.pos]||'var(--text3)'};">${p.pos||''}</span>
       </div>
-      <div class="player-name">${p.nombre} ${p.apellido}</div>
+      <div class="player-name">${p.nombre} ${p.apellido||''}</div>
+      ${apodo ? `<div style="font-size:11px;color:var(--gold);margin-bottom:6px;font-style:italic;">"${apodo}"</div>` : ''}
+      ${awards.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
+        ${awards.slice(0,3).map(([yr,cat]) => `<span style="font-size:9px;background:#1a1200;color:var(--gold);border:1px solid #3a2a00;padding:1px 5px;border-radius:3px;white-space:nowrap;">${cat} '${yr.slice(2)}</span>`).join('')}
+        ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
+      </div>` : ''}
       <div class="player-stats">
         <div><div class="p-stat-val">${p.g}</div><div class="p-stat-lbl">Goles</div></div>
         <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
@@ -1618,8 +1661,8 @@ function renderPlayers() {
         <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:${p.exp>0?'var(--red)':'var(--text2)'};">${p.exp}</div><div style="font-size:9px;color:var(--text3);">Exp.</div></div>
         <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.vi}</div><div style="font-size:9px;color:var(--text3);">Vallas</div></div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function openPlayerModal(num, apellido) {
@@ -1627,6 +1670,9 @@ function openPlayerModal(num, apellido) {
   if (!p) return;
 
   document.getElementById('pm-avatar').textContent = getInitials(p);
+  const pKey = `${p.nombre}|${p.apellido||''}`;
+  const pApodo = p.apodo || apodosMap[pKey] || '';
+  const pAwards = awardsMap[pKey] || [];
   document.getElementById('pm-name').textContent = `${p.nombre} ${p.apellido}`;
   document.getElementById('pm-meta').innerHTML = `
     <span style="background:${posColors[p.pos]};color:${posTextColors[p.pos]};padding:2px 8px;border-radius:4px;font-size:10px;">${p.pos}</span>
@@ -1652,6 +1698,19 @@ function openPlayerModal(num, apellido) {
     <div class="metric-card"><div class="metric-val" style="font-size:20px">${p.temporadas.length}</div><div class="metric-sub">Temporadas</div></div>
   `;
 
+    // Insert awards in modal
+  const existingAwards = document.getElementById('pm-awards-block');
+  if (existingAwards) existingAwards.remove();
+  if (pAwards.length > 0) {
+    const awardsDiv = document.createElement('div');
+    awardsDiv.id = 'pm-awards-block';
+    awardsDiv.style.cssText = 'margin:0 0 16px;padding:12px 14px;background:#1a1200;border:1px solid #3a2a00;border-radius:8px;';
+    awardsDiv.innerHTML = `<div style="font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">🏅 Wehen Awards</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        ${pAwards.map(([yr,cat]) => `<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text2);">${cat}</span><span style="color:var(--gold);font-weight:600;">${yr}</span></div>`).join('')}
+      </div>`;
+    document.getElementById('pm-seasons').before(awardsDiv);
+  }
   document.getElementById('pm-seasons').innerHTML = p.temporadas.map((t, i) => `
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:8px;padding:8px 12px;">
       <div style="font-size:13px;font-weight:500;">${t}</div>
