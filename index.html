@@ -368,6 +368,22 @@
     font-family: 'DM Sans', sans-serif; font-weight: 600; letter-spacing: 0.5px;
   }
   .hotspot:hover .hotspot-hint { opacity: 1; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .modal-img { width:100%; max-height:220px; object-fit:contain; border-radius:10px; margin-bottom:16px; background:#1a1a1a; }
+  .modal-tag { font-size:10px; color:#C9A84C; letter-spacing:2px; text-transform:uppercase; font-weight:600; margin-bottom:6px; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; color:#fff; margin-bottom:16px; line-height:1; }
+  .award-list { display:flex; flex-direction:column; gap:5px; }
+  .award-row { display:flex; align-items:center; gap:12px; background:#1c1c1c; border-radius:8px; padding:8px 14px; border:1px solid #242424; }
+  .award-cat { font-size:11px; color:#666; flex:1; text-transform:uppercase; letter-spacing:0.5px; }
+  .award-winner { font-size:13px; font-weight:600; color:#f0f0f0; text-align:right; }
+  .shirt-info { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+  .shirt-stat { background:#1c1c1c; border-radius:8px; padding:10px 14px; border:1px solid #242424; }
+  .shirt-stat-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+  .shirt-stat-val { font-size:14px; font-weight:600; color:#f0f0f0; }
+  .copa-content { text-align:center; padding:10px 0; }
+  .copa-year { font-family:'Bebas Neue',sans-serif; font-size:56px; color:#C9A84C; line-height:1; }
+  .copa-sub { font-size:13px; color:#888; margin-top:6px; }
+  .trophy-emoji { font-size:48px; margin-bottom:10px; display:block; }
 </style>
 <script>
 // PWA Manifest inline
@@ -1812,6 +1828,7 @@ const modals = {
 
 function openMuseumModal(key) {
   const data = modals[key];
+  if (!data) return;
   let html = `<img class="modal-img" src="${data.img}" alt="${data.title}">
     <div class="modal-tag">${data.tag}</div>
     <div class="modal-title">${data.title}</div>`;
@@ -1824,39 +1841,27 @@ function openMuseumModal(key) {
       <div class="copa-sub" style="margin-top:8px;color:#C9A84C;font-weight:600;">Primer título de la historia</div>
     </div>`;
   } else if (data.type === 'awards') {
-    html += `<div class="award-list">
-      ${data.awards.map(([cat, winner]) => `
-        <div class="award-row">
-          <div class="award-cat">${cat}</div>
-          <div class="award-winner">${winner}</div>
-        </div>`).join('')}
-    </div>`;
+    html += `<div class="award-list">${data.awards.map(([cat,winner]) =>
+      `<div class="award-row"><div class="award-cat">${cat}</div><div class="award-winner">${winner}</div></div>`
+    ).join('')}</div>`;
   } else if (data.type === 'shirt') {
-    html += `<div class="shirt-info">
-      ${data.details.map(([label, val]) => `
-        <div class="shirt-stat">
-          <div class="shirt-stat-label">${label}</div>
-          <div class="shirt-stat-val">${val}</div>
-        </div>`).join('')}
-    </div>`;
+    html += `<div class="shirt-info">${data.details.map(([label,val]) =>
+      `<div class="shirt-stat"><div class="shirt-stat-label">${label}</div><div class="shirt-stat-val">${val}</div></div>`
+    ).join('')}</div>`;
   }
 
-  document.getElementById('modal-body').innerHTML = html;
-  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('museum-modal-body').innerHTML = html;
+  const overlay = document.getElementById('museum-modal-overlay');
+  overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
 function closeMuseumModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('museum-modal-overlay').style.display = 'none';
   document.body.style.overflow = '';
 }
 
-function handleMuseumOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeMuseumModal();
-}
-
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMuseumModal(); });
-
 
 </script>
 
