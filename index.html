@@ -1571,6 +1571,22 @@ const playersData = [
 const posColors = { 'Arquero':'#1a4a8a', 'Defensor':'#1a5a2a', 'Mediocampista':'#5a3a00', 'Delantero':'#7a1a1a' };
 const posTextColors = { 'Arquero':'#6ab0ff', 'Defensor':'#6adf8a', 'Mediocampista':'#e8a020', 'Delantero':'#ff7070' };
 
+
+function getPhotoFilename(p) {
+  const normalize = str => (str||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_');
+  return `fotos/${normalize(p.nombre)}_${normalize(p.apellido)}.jpg`;
+}
+
+function playerAvatar(p, size=34) {
+  const foto = getPhotoFilename(p);
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);${p.ex?'opacity:0.6':''}">
+    <img src="${foto}" style="width:100%;height:100%;object-fit:cover;" 
+      onerror="this.parentElement.innerHTML='<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:${Math.round(size*0.38)}px;color:#fff;\">${getInitials(p)}</div>'">
+  </div>`;
+}
+
 function getInitials(p) {
   return (p.nombre[0] + p.apellido[0]).toUpperCase();
 }
@@ -1646,7 +1662,7 @@ function renderPlayers() {
     <div class="player-card" onclick="openPlayerModal(${p.num},'${(p.apellido||'').replace(/'/g,"\\'")}')">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:34px;height:34px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#fff;flex-shrink:0;${p.ex?'opacity:0.6':''}">${getInitials(p)}</div>
+          ${playerAvatar(p, 34)}
           <div>
             <div class="player-num">#${p.num}</div>
             ${p.ex ? '<span style="font-size:9px;background:#3a1010;color:var(--red);padding:1px 5px;border-radius:3px;letter-spacing:0.5px;">EX</span>' : ''}
@@ -1683,7 +1699,9 @@ function openPlayerModal(num, apellido) {
   const pApodo = p.apodo || apodosMap[pKey] || '';
   const pAwards = awardsMap[pKey] || [];
 
-  document.getElementById('pm-avatar').textContent = getInitials(p);
+  const pmAvatarEl = document.getElementById('pm-avatar');
+  const pmFoto = getPhotoFilename(p);
+  pmAvatarEl.innerHTML = `<img src="${pmFoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${getInitials(p)}'">`;
   document.getElementById('pm-name').textContent = `${p.nombre} ${p.apellido}`;
   document.getElementById('pm-meta').innerHTML = `
     <span style="background:${posColors[p.pos]};color:${posTextColors[p.pos]};padding:2px 8px;border-radius:4px;font-size:10px;">${p.pos}</span>
