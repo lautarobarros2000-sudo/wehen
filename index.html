@@ -549,7 +549,7 @@ if ('serviceWorker' in navigator) {
     <div id="pm-header" style="background:linear-gradient(135deg,#1a0808,#2a0a0a);padding:28px 24px 20px;position:relative;border-bottom:1px solid var(--border);">
       <button onclick="closePlayerModal()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;font-family:inherit;">×</button>
       <div style="display:flex;align-items:center;gap:16px;">
-        <div id="pm-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--red);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;flex-shrink:0;"></div>
+        <div id="pm-avatar" style="width:90px;height:90px;border-radius:50%;background:var(--red);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;flex-shrink:0;overflow:hidden;"></div>
         <div>
           <div id="pm-name" style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;line-height:1;"></div>
           <div id="pm-meta" style="font-size:12px;color:var(--text3);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;"></div>
@@ -815,18 +815,19 @@ function extractMatches(rows) {
     if (r1 !== '' && r2 !== '' && !isNaN(parseInt(r1)) && !isNaN(parseInt(r2))) {
       const fase = r7 || currentFase || '';
       if (fase) currentFase = fase;
+      const igRaw = (row[6]||'').trim();
+      const ig = igRaw ? (igRaw.startsWith('http') ? igRaw : 'https://' + igRaw) : '';
 
       if (currentTipo === 'Copa') {
         if (pendingIda && pendingIda.rival === r0) {
-          // This is the vuelta
-          pendingIda.vuelta = { gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—' };
+          pendingIda.vuelta = { gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', ig };
           if (fase) pendingIda.fase = fase;
         } else {
           if (pendingIda) matches.push(pendingIda);
-          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase };
+          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig };
         }
       } else {
-        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase });
+        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig });
       }
     } else if (r1 === '' || r1 === '-' || r1 === '–') {
       if (pendingIda) { matches.push(pendingIda); pendingIda = null; }
@@ -1425,6 +1426,7 @@ function renderMatchesList(partidos, tipo) {
             ${p.pendiente ? '<span style="font-size:11px;font-family:DM Sans,sans-serif;color:var(--text3)">Pendiente</span>' : `${p.gf} - ${p.gc}`}
           </div>
           ${!p.pendiente ? `<div class="match-scorers">${p.goles||'—'}</div>` : ''}
+          ${p.ig ? `<a href="${p.ig}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver en Instagram" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);text-decoration:none;font-size:14px;">📸</a>` : ''}
         </div>`;
       }).join('')}
     </div>`;
@@ -1580,14 +1582,14 @@ function getPhotoFilename(p) {
 }
 
 function playerAvatar(p, size) {
-  size = size || 34;
+  size = size || 40;
   const foto = getPhotoFilename(p);
   const initials = getInitials(p);
   const opacity = p.ex ? 'opacity:0.6;' : '';
-  const fs = Math.round(size * 0.38) + 'px';
-  const wrap = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);display:flex;align-items:center;justify-content:center;' + opacity;
-  const fallback = '<span style="font-family:Bebas Neue,sans-serif;font-size:' + fs + ';color:#fff;">' + initials + '</span>';
-  return '<div style="' + wrap + '"><img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'' + fallback + '\')"></div>';
+  const fs = Math.round(size * 0.36);
+  return '<div class="p-avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);' + opacity + 'display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:' + fs + 'px;color:#fff;" data-initials="' + initials + '">'
+    + '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.removeChild(this);this.parentElement.textContent=this.parentElement.dataset.initials;">'
+    + '</div>';
 }
 
 
@@ -1711,8 +1713,16 @@ function openPlayerModal(num, apellido) {
 
   const pmAvatarEl = document.getElementById('pm-avatar');
   const pmFoto = getPhotoFilename(p);
-  pmAvatarEl.innerHTML = `<img src="${pmFoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${getInitials(p)}'">`;
-  document.getElementById('pm-name').textContent = `${p.nombre} ${p.apellido}`;
+  const pmInitials = getInitials(p);
+  pmAvatarEl.dataset.initials = pmInitials;
+  pmAvatarEl.textContent = pmInitials;
+  const pmImg = document.createElement('img');
+  pmImg.src = pmFoto;
+  pmImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;';
+  pmImg.onerror = function() { this.remove(); };
+  pmAvatarEl.style.position = 'relative';
+  pmAvatarEl.appendChild(pmImg);
+  document.getElementById('pm-name').innerHTML = `${p.nombre} ${p.apellido}` + (pApodo ? ` <span style="color:var(--gold);font-style:italic;font-size:16px;">"${pApodo}"</span>` : '');
   document.getElementById('pm-meta').innerHTML = `
     <span style="background:${posColors[p.pos]};color:${posTextColors[p.pos]};padding:2px 8px;border-radius:4px;font-size:10px;">${p.pos}</span>
     <span>#${p.num}</span>
