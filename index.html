@@ -1733,7 +1733,6 @@ function openPlayerModal(num, apellido) {
     <span style="background:${posColors[p.pos]};color:${posTextColors[p.pos]};padding:2px 8px;border-radius:4px;font-size:10px;">${p.pos}</span>
     <span>#${p.num}</span>
     ${p.ex ? '<span style="background:#3a1010;color:var(--red);padding:2px 8px;border-radius:4px;font-size:10px;">EX JUGADOR</span>' : '<span style="background:#0a2a0a;color:#6adf8a;padding:2px 8px;border-radius:4px;font-size:10px;">ACTIVO</span>'}
-    ${pApodo ? `<span style="color:var(--gold);font-style:italic;font-size:12px;">"${pApodo}"</span>` : ''}
   `;
 
   const gpj = p.pj > 0 ? (p.g/p.pj).toFixed(2) : '0.00';
