@@ -845,34 +845,41 @@ function extractMatches(rows) {
 function extractGlosario(rows) {
   const map = {};
   const players = [];
+  const staffRoles = ['DT', 'Entrenador', 'Asistente', 'Camarógrafo', 'Contador', 'Preparador', 'Médico', 'Kinesiólogo'];
 
   for (const row of rows) {
     const nro = (row[0] || '').trim();
     const nombre = (row[1] || '').trim();
     const apellido = (row[2] || '').trim();
-    if (!nro || !nombre || !apellido) continue;
-    if (!/^(EX\s+)?\d+$/.test(nro)) continue;
+    if (!nombre || !apellido) continue;
 
     const apodo = (row[10] || '').trim();
     const pos   = (row[11] || '').trim();
+
+    // Check if it's a staff/cuerpo técnico row (no jersey number, but has a role)
+    const isStaff = (!nro || !/^(EX\s+)?\d+$/.test(nro)) && pos && staffRoles.includes(pos);
+    const isPlayer = nro && /^(EX\s+)?\d+$/.test(nro);
+
+    if (!isPlayer && !isStaff) continue;
+
     const ex    = nro.startsWith('EX');
     const numMatch = nro.match(/\d+/);
     const num   = numMatch ? parseInt(numMatch[0]) : 0;
 
-    // General stats from cols 27-36
-    const pj  = parseInt(row[30]) || 0;
-    const g   = parseInt(row[31]) || 0;
-    const a   = parseInt(row[32]) || 0;
-    const vi  = parseInt(row[33]) || 0;
-    const tit = parseInt(row[34]) || 0;
-    const sup = parseInt(row[35]) || 0;
-    const exp = parseInt(row[36]) || 0;
+    // General stats from cols 27-36 (only meaningful for players)
+    const pj  = isPlayer ? (parseInt(row[30]) || 0) : 0;
+    const g   = isPlayer ? (parseInt(row[31]) || 0) : 0;
+    const a   = isPlayer ? (parseInt(row[32]) || 0) : 0;
+    const vi  = isPlayer ? (parseInt(row[33]) || 0) : 0;
+    const tit = isPlayer ? (parseInt(row[34]) || 0) : 0;
+    const sup = isPlayer ? (parseInt(row[35]) || 0) : 0;
+    const exp = isPlayer ? (parseInt(row[36]) || 0) : 0;
 
     const key = `${nombre}|${apellido}`;
     map[key] = { apodo, pos };
 
     players.push({ num, nombre, apellido, ex, apodo, pos, pj, g, a, vi, tit, sup, exp,
-      temporadas: [], golesXtemp: [] });
+      isStaff: isStaff || false, temporadas: [], golesXtemp: [] });
   }
   return { map, players };
 }
@@ -993,8 +1000,7 @@ function updateHomePage() {
       <div class="podium-unit">${unit}</div>
     </div>`;
   }).join('');
-
-  // Top goleadores
+// Top goleadores
   const topGoles = [...playersData].sort((a,b) => b.g - a.g).slice(0,3);
   const podGoles = document.getElementById('podium-goles');
   if (podGoles) podGoles.innerHTML = podiumHTML(topGoles, 'g', 'goles');
@@ -1426,7 +1432,7 @@ function renderMatchesList(partidos, tipo) {
             ${p.pendiente ? '<span style="font-size:11px;font-family:DM Sans,sans-serif;color:var(--text3)">Pendiente</span>' : `${p.gf} - ${p.gc}`}
           </div>
           ${!p.pendiente ? `<div class="match-scorers">${p.goles||'—'}</div>` : ''}
-          ${p.ig ? `<a href="${p.ig}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver en Instagram" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);text-decoration:none;font-size:14px;">📸</a>` : ''}
+          ${p.ig ? `<a href="${p.ig}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver en Instagram" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);text-decoration:none;"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"#fff\"><path d=\"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z\"/></svg></a>` : ''}
         </div>`;
       }).join('')}
     </div>`;
@@ -1493,9 +1499,7 @@ function applyFilter(tipo, el, key) {
 
   // Matches
   document.getElementById('matches-area').innerHTML = renderMatchesList(s.partidos, tipo);
-}
-
-// Build season selector cards
+}// Build season selector cards
 function buildSeasonGrid() {
   const allKeys = ['Apertura 2023','Clausura 2023','Apertura 2024','Clausura 2024','Apertura 2025','Clausura 2025','Apertura 2026'];
   const grid = document.getElementById('season-grid');
@@ -1570,8 +1574,8 @@ const playersData = [
   { num:77, nombre:'Joaquín',    apellido:'Paglierino', pos:'Defensor',      ex:false, pj:3,  g:0,  a:0,  vi:0, tit:1,  sup:2, exp:0, temporadas:['Apertura 2025'], golesXtemp:[0] },
 ];
 
-const posColors = { 'Arquero':'#1a4a8a', 'Defensor':'#1a5a2a', 'Mediocampista':'#5a3a00', 'Delantero':'#7a1a1a' };
-const posTextColors = { 'Arquero':'#6ab0ff', 'Defensor':'#6adf8a', 'Mediocampista':'#e8a020', 'Delantero':'#ff7070' };
+const posColors = { 'Arquero':'#1a4a8a', 'Defensor':'#1a5a2a', 'Mediocampista':'#5a3a00', 'Delantero':'#7a1a1a', 'DT':'#2a1a5a', 'Entrenador':'#2a1a5a', 'Camarógrafo':'#2a3a1a', 'Contador':'#2a3a1a', 'Asistente':'#2a1a5a', 'Preparador':'#2a1a5a' };
+const posTextColors = { 'Arquero':'#6ab0ff', 'Defensor':'#6adf8a', 'Mediocampista':'#e8a020', 'Delantero':'#ff7070', 'DT':'#a0a0ff', 'Entrenador':'#a0a0ff', 'Camarógrafo':'#a0df8a', 'Contador':'#a0df8a', 'Asistente':'#a0a0ff', 'Preparador':'#a0a0ff' };
 
 
 function getPhotoFilename(p) {
@@ -1587,8 +1591,9 @@ function playerAvatar(p, size) {
   const initials = getInitials(p);
   const opacity = p.ex ? 'opacity:0.6;' : '';
   const fs = Math.round(size * 0.36);
-  return '<div class="p-avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);' + opacity + 'display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:' + fs + 'px;color:#fff;" data-initials="' + initials + '">'
-    + '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.removeChild(this);this.parentElement.textContent=this.parentElement.dataset.initials;">'
+  return '<div class="p-avatar" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);' + opacity + 'position:relative;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:' + fs + 'px;color:#fff;">'
+    + '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;">' + initials + '</span>'
+    + '<img src="' + foto + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:50%;" onload="this.style.opacity=1" onerror="this.remove();">'
     + '</div>';
 }
 
@@ -1666,8 +1671,9 @@ function renderPlayers() {
     const awards = awardsMap[key] || [];
     const foto = getPhotoFilename(p);
     const initials = getInitials(p);
-    const avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);' + (p.ex?'opacity:0.6;':'') + 'display:flex;align-items:center;justify-content:center;">'
-      + '<img src="' + foto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<span style=\\"font-family:Bebas Neue,sans-serif;font-size:14px;color:#fff;\\">' + initials + '</span>\')">'
+    const avatarHtml = '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--red);' + (p.ex?'opacity:0.6;':'') + 'position:relative;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:14px;color:#fff;">'
+      + '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;">' + initials + '</span>'
+      + '<img src="' + foto + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.remove();">'
       + '</div>';
 
     return `
@@ -1688,11 +1694,11 @@ function renderPlayers() {
         ${awards.slice(0,3).map(([yr,cat]) => `<span style="font-size:9px;background:#1a1200;color:var(--gold);border:1px solid #3a2a00;padding:1px 5px;border-radius:3px;white-space:nowrap;">${cat} '${yr.slice(2)}</span>`).join('')}
         ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
       </div>` : ''}
-      <div class="player-stats">
+      ${p.isStaff ? `<div style="margin-top:8px;text-align:center;"><span style="font-size:11px;padding:3px 10px;border-radius:4px;background:var(--bg4);color:var(--gold);letter-spacing:0.5px;">${p.pos}</span></div>` : `<div class="player-stats">
         <div><div class="p-stat-val">${p.g}</div><div class="p-stat-lbl">Goles</div></div>
         <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
         <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
-      </div>
+      </div>`}
       <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
         <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.tit}</div><div style="font-size:9px;color:var(--text3);">Tit.</div></div>
         <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.sup}</div><div style="font-size:9px;color:var(--text3);">Sup.</div></div>
@@ -1719,7 +1725,7 @@ function openPlayerModal(num, apellido) {
   const pmImg = document.createElement('img');
   pmImg.src = pmFoto;
   pmImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;';
-  pmImg.onerror = function() { this.remove(); };
+  pmImg.onerror = function() { this.remove(); };  // initials already visible as textContent
   pmAvatarEl.style.position = 'relative';
   pmAvatarEl.appendChild(pmImg);
   document.getElementById('pm-name').innerHTML = `${p.nombre} ${p.apellido}` + (pApodo ? ` <span style="color:var(--gold);font-style:italic;font-size:16px;">"${pApodo}"</span>` : '');
