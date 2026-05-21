@@ -1739,9 +1739,9 @@ function openPlayerModal(num, apellido) {
   const titPct = p.pj > 0 ? Math.round(p.tit/p.pj*100) : 0;
 
   document.getElementById('pm-stats').innerHTML = `
+    <div class="metric-card"><div class="metric-val" style="font-size:24px">${p.pj}</div><div class="metric-sub">Partidos</div></div>
     <div class="metric-card"><div class="metric-val c-red" style="font-size:24px">${p.g}</div><div class="metric-sub">Goles</div></div>
     <div class="metric-card"><div class="metric-val c-gold" style="font-size:24px">${p.a}</div><div class="metric-sub">Asistencias</div></div>
-    <div class="metric-card"><div class="metric-val" style="font-size:24px">${p.pj}</div><div class="metric-sub">Partidos</div></div>
     <div class="metric-card"><div class="metric-val" style="font-size:24px;color:${p.exp>0?'var(--red)':'var(--text)'}">${p.exp}</div><div class="metric-sub">Expulsiones</div></div>
   `;
 
