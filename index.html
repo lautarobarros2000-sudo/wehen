@@ -1695,9 +1695,9 @@ function renderPlayers() {
         ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
       </div>` : ''}
       ${p.isStaff ? `<div style="margin-top:8px;text-align:center;"><span style="font-size:11px;padding:3px 10px;border-radius:4px;background:var(--bg4);color:var(--gold);letter-spacing:0.5px;">${p.pos}</span></div>` : `<div class="player-stats">
+        <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
         <div><div class="p-stat-val">${p.g}</div><div class="p-stat-lbl">Goles</div></div>
         <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
-        <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
       </div>`}
       <div class="player-card-secondary" style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
         <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.tit}</div><div style="font-size:9px;color:var(--text3);">Tit.</div></div>
