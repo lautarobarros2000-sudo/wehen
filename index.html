@@ -1690,7 +1690,7 @@ function renderPlayers() {
       </div>
       <div class="player-name">${p.nombre} ${p.apellido||''}</div>
       ${apodo ? `<div style="font-size:11px;color:var(--gold);margin-bottom:6px;font-style:italic;">"${apodo}"</div>` : ''}
-      ${awards.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
+      ${awards.length > 0 ? `<div class="player-card-awards" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
         ${awards.slice(0,3).map(([yr,cat]) => `<span style="font-size:9px;background:#1a1200;color:var(--gold);border:1px solid #3a2a00;padding:1px 5px;border-radius:3px;white-space:nowrap;">${cat} '${yr.slice(2)}</span>`).join('')}
         ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
       </div>` : ''}
@@ -1798,6 +1798,8 @@ wehenStyle.textContent = `
     .player-card-secondary { display:none !important; }
     .player-card { padding: 10px !important; }
 .player-name { font-size: 12px !important; }
+.player-card-awards { display: none !important; }
+#players-grid { align-items: start !important; }
   }
 `;
 document.head.appendChild(wehenStyle);
