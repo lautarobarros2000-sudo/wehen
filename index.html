@@ -1694,7 +1694,7 @@ function renderPlayers() {
         ${awards.slice(0,3).map(([yr,cat]) => `<span style="font-size:9px;background:#1a1200;color:var(--gold);border:1px solid #3a2a00;padding:1px 5px;border-radius:3px;white-space:nowrap;">${cat} '${yr.slice(2)}</span>`).join('')}
         ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
       </div>` : ''}
-    ${p.isStaff ? ... : `<div class="player-stats">
+   ${p.isStaff ? `<div style="margin-top:8px;text-align:center;"><span style="font-size:11px;padding:3px 10px;border-radius:4px;background:var(--bg4);color:var(--gold);letter-spacing:0.5px;">${p.pos}</span></div>` : `<div class="player-stats">
   <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
   <div><div class="p-stat-val">${p.pos==='Arquero' ? p.vi : p.g}</div><div class="p-stat-lbl">${p.pos==='Arquero' ? 'Vallas' : 'Goles'}</div></div>
   <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
