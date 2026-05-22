@@ -1694,17 +1694,16 @@ function renderPlayers() {
         ${awards.slice(0,3).map(([yr,cat]) => `<span style="font-size:9px;background:#1a1200;color:var(--gold);border:1px solid #3a2a00;padding:1px 5px;border-radius:3px;white-space:nowrap;">${cat} '${yr.slice(2)}</span>`).join('')}
         ${awards.length > 3 ? `<span style="font-size:9px;color:var(--text3);padding:1px 4px;">+${awards.length-3}</span>` : ''}
       </div>` : ''}
-      ${p.isStaff ? `<div style="margin-top:8px;text-align:center;"><span style="font-size:11px;padding:3px 10px;border-radius:4px;background:var(--bg4);color:var(--gold);letter-spacing:0.5px;">${p.pos}</span></div>` : `<div class="player-stats">
-        <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
-        <div><div class="p-stat-val">${p.g}</div><div class="p-stat-lbl">Goles</div></div>
-        <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
-      </div>`}
-      <div class="player-card-secondary" style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-        <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.tit}</div><div style="font-size:9px;color:var(--text3);">Tit.</div></div>
-        <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.sup}</div><div style="font-size:9px;color:var(--text3);">Sup.</div></div>
-        <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:${p.exp>0?'var(--red)':'var(--text2)'};">${p.exp}</div><div style="font-size:9px;color:var(--text3);">Exp.</div></div>
-        <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.vi}</div><div style="font-size:9px;color:var(--text3);">Vallas</div></div>
-      </div>
+    ${p.isStaff ? ... : `<div class="player-stats">
+  <div><div class="p-stat-val">${p.pj}</div><div class="p-stat-lbl">PJ</div></div>
+  <div><div class="p-stat-val">${p.pos==='Arquero' ? p.vi : p.g}</div><div class="p-stat-lbl">${p.pos==='Arquero' ? 'Vallas' : 'Goles'}</div></div>
+  <div><div class="p-stat-val">${p.a}</div><div class="p-stat-lbl">Asist.</div></div>
+</div>`}
+     <div class="player-card-secondary" style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+  <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.tit}</div><div style="font-size:9px;color:var(--text3);">Tit.</div></div>
+  <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:var(--text2);">${p.sup}</div><div style="font-size:9px;color:var(--text3);">Sup.</div></div>
+  <div style="text-align:center;"><div style="font-size:12px;font-weight:600;color:${p.exp>0?'var(--red)':'var(--text2)'};">${p.exp}</div><div style="font-size:9px;color:var(--text3);">Exp.</div></div>
+</div>
     </div>`;
   }).join('');
 }
