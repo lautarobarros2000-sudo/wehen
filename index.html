@@ -1793,12 +1793,11 @@ wehenStyle.textContent = `
   .standings-grid { }
   @media (max-width:600px) {
     .standings-grid { grid-template-columns:1fr !important; }
-#players-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    #players-grid { grid-template-columns: repeat(2, 1fr) !important; align-items: start !important; }
     .player-card-secondary { display:none !important; }
     .player-card { padding: 10px !important; }
-.player-name { font-size: 12px !important; }
-.player-card-awards { display: none !important; }
-#players-grid { align-items: start !important; }
+    .player-name { font-size: 12px !important; }
+    .player-card-awards { display: none !important; }
   }
 `;
 document.head.appendChild(wehenStyle);
