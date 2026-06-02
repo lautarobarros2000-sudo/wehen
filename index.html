@@ -386,7 +386,21 @@
   .copa-sub { font-size:13px; color:#888; margin-top:6px; }
   .trophy-emoji { font-size:48px; margin-bottom:10px; display:block; }
   @media (min-width: 769px) { .hotspots-mobile { display: none; } }
-@media (max-width: 768px)  { .hotspots-desktop { display: none; } }
+  @media (min-width: 769px) {
+  #page-honor .museum img {
+    max-height: 90vh;
+    width: auto;
+    margin: 0 auto;
+  }
+}
+@media (max-width: 768px) {
+  .hotspots-desktop { display: none; }
+  .modal-title { font-size: 20px; }
+  .modal-tag { font-size: 9px; }
+  .shirt-stat-label { font-size: 8px; }
+  .shirt-stat-val { font-size: 12px; }
+  .shirt-info { gap: 6px; }
+}  
 </style>
 <script>
 // PWA Manifest inline
