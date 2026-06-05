@@ -961,7 +961,14 @@ async function loadAllSheets() {
     }
 
     sheetsLoaded = true;
-    buildSeasonGrid();
+      Object.keys(rivalHistorial).forEach(k => delete rivalHistorial[k]);
+      Object.entries(allSeasons).forEach(([temporada, data]) => {
+        (data.partidos || []).forEach(p => {
+          if (!rivalHistorial[p.rival]) rivalHistorial[p.rival] = [];
+          rivalHistorial[p.rival].push({ ...p, temporada });
+        });
+      });
+      buildSeasonGrid();
     document.getElementById('season-detail-area').innerHTML = renderSeasonDetail('Apertura 2023');
     renderPlayers();
     updateHomePage();
