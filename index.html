@@ -1433,7 +1433,8 @@ function renderMatchesList(partidos, tipo) {
           const vCls = p.vuelta.gf > p.vuelta.gc ? 's-w' : p.vuelta.gf === p.vuelta.gc ? 's-d' : 's-l';
           return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
             <div style="background:var(--bg3);padding:8px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);">
-              <span class="match-badge copa">Copa</span>
+              ${p.sede ? `<span style="font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif;padding:2px 7px;background:var(--bg4);border-radius:4px;letter-spacing:0.5px;">${p.sede}</span>` : ''}
+  <span class="match-badge copa">Copa</span>
               <span style="font-size:13px;font-weight:600;color:var(--text);">Wehen vs ${p.rival}</span>
               ${p.fase ? `<span style="font-size:10px;color:var(--text3);margin-left:auto;">${p.fase}</span>` : ''}
             </div>
