@@ -847,14 +847,14 @@ function extractMatches(rows) {
 
       if (currentTipo === 'Copa') {
         if (pendingIda && pendingIda.rival === r0) {
-          pendingIda.vuelta = { gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', ig };
+          pendingIda.vuelta = { gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', sede: (row[5]||'').trim(), ig };
           if (fase) pendingIda.fase = fase;
         } else {
           if (pendingIda) matches.push(pendingIda);
-          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig };
+          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, sede: (row[5]||'').trim(), ig };
         }
       } else {
-        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig });
+        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, sede: (row[5]||'').trim(), ig });
       }
     } else if (r1 === '' || r1 === '-' || r1 === '–') {
       if (pendingIda) { matches.push(pendingIda); pendingIda = null; }
@@ -1439,11 +1439,13 @@ function renderMatchesList(partidos, tipo) {
             </div>
             <div style="padding:8px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a;">
               <span style="font-size:10px;color:var(--text3);width:50px;flex-shrink:0;">IDA</span>
+              ${p.sede ? `<span style="font-size:10px;color:var(--text2);padding:2px 7px;background:var(--bg3);border-radius:4px;">${p.sede}</span>` : ''}
               <div class="${iCls}" style="font-family:'Bebas Neue',sans-serif;font-size:16px;min-width:44px;text-align:center;">${p.gf} - ${p.gc}</div>
               <div class="match-scorers">${p.goles}</div>
             </div>
             <div style="padding:8px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a1a1a;">
               <span style="font-size:10px;color:var(--text3);width:50px;flex-shrink:0;">VUELTA</span>
+              ${p.vuelta.sede ? `<span style="font-size:10px;color:var(--text2);padding:2px 7px;background:var(--bg3);border-radius:4px;">${p.vuelta.sede}</span>` : ''}
               <div class="${vCls}" style="font-family:'Bebas Neue',sans-serif;font-size:16px;min-width:44px;text-align:center;">${p.vuelta.gf} - ${p.vuelta.gc}</div>
               <div class="match-scorers">${p.vuelta.goles}</div>
             </div>
@@ -1458,7 +1460,8 @@ function renderMatchesList(partidos, tipo) {
         // Regular match
         const sc = p.pendiente ? '' : p.gf > p.gc ? 's-w' : p.gf === p.gc ? 's-d' : 's-l';
         return `<div class="match-row">
-          <span class="match-badge ${p.tipo==='Copa'?'copa':''}">${p.tipo}</span>
+            ${p.sede ? `<span style="font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif;padding:2px 7px;background:var(--bg3);border-radius:4px;letter-spacing:0.5px;">${p.sede}</span>` : ''}
+            <span class="match-badge ${p.tipo==='Copa'?'copa':''}">${p.tipo}</span>
           <div class="match-teams" onclick="${!p.pendiente?`openRivalModal('${p.rival.replace(/'/g,"\\'")}')`:'void(0)'}" style="flex:1;cursor:${p.pendiente?'default':'pointer'}">
             Wehen vs <span style="${!p.pendiente?'text-decoration:underline;text-underline-offset:3px;':''}">${p.rival}</span>
           </div>
@@ -1984,6 +1987,85 @@ function closeMuseumModal() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMuseumModal(); });
 
 </script>
+ <!-- ===== TOAST DONACION MERCADO PAGO ===== -->
+  <div id="mp-toast" style="
+    position:fixed;
+    bottom:-160px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(420px, 94vw);
+    background:#1c1c1c;
+    border:1px solid #2a2a2a;
+    border-top:3px solid #C9A84C;
+    border-radius:14px 14px 0 0;
+    padding:18px 20px 20px;
+    z-index:9999;
+    box-shadow:0 -6px 32px rgba(0,0,0,0.6);
+    transition:bottom 0.45s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'DM Sans',sans-serif;
+  ">
+    <button onclick="closeMpToast()" style="
+      position:absolute;top:12px;right:14px;
+      background:none;border:none;color:#555;
+      font-size:18px;cursor:pointer;line-height:1;
+    ">&#x2715;</button>
 
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="font-size:22px;">⚽</span>
+      <span style="font-size:15px;font-weight:700;color:#C9A84C;letter-spacing:0.5px;text-transform:uppercase;">Apoyá al Wehen</span>
+    </div>
+
+    <p style="font-size:13px;color:#999;margin-bottom:14px;line-height:1.4;">
+      Te pensas que estas boludeces son gratis? Dona así nos compramos algunas pelotas y tiramos la penalty!
+    </p>
+
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <a href="https://mpago.la/2gQ19L9" target="_blank" rel="noopener" style="
+        flex:1;text-align:center;padding:10px 6px;
+        background:#C41E3A;color:#fff;
+        border-radius:8px;font-size:13px;font-weight:600;
+        text-decoration:none;transition:background 0.2s;
+      " onmouseover="this.style.background='#8B1226'" onmouseout="this.style.background='#C41E3A'">
+        $5.000
+      </a>
+      <a href="https://mpago.la/2V5vywC" target="_blank" rel="noopener" style="
+        flex:1;text-align:center;padding:10px 6px;
+        background:#C9A84C;color:#0a0a0a;
+        border-radius:8px;font-size:13px;font-weight:700;
+        text-decoration:none;transition:background 0.2s;
+      " onmouseover="this.style.background='#e6c875'" onmouseout="this.style.background='#C9A84C'">
+        $10.000
+      </a>
+      <a href="https://mpago.la/1XtHCpV" target="_blank" rel="noopener" style="
+        flex:1;text-align:center;padding:10px 6px;
+        background:#C41E3A;color:#fff;
+        border-radius:8px;font-size:13px;font-weight:600;
+        text-decoration:none;transition:background 0.2s;
+      " onmouseover="this.style.background='#8B1226'" onmouseout="this.style.background='#C41E3A'">
+        $15.000
+      </a>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var shown = sessionStorage.getItem('mpToastShown');
+      if (!shown) {
+        setTimeout(function() {
+    var t = document.getElementById('mp-toast');
+    document.body.appendChild(t);
+    t.style.bottom = '0px';
+    sessionStorage.setItem('mpToastShown', '1');
+  }, 4000);
+      }
+    })();
+
+    function closeMpToast() {
+    var t = document.getElementById('mp-toast');
+    t.style.bottom = '-' + (t.offsetHeight + 20) + 'px';
+  }
+  </script>
+  </div>
+  <!-- ===== FIN TOAST DONACION ===== -->
 </body>
 </html>
