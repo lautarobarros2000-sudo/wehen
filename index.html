@@ -2049,9 +2049,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMuseumM
       var shown = sessionStorage.getItem('mpToastShown');
       if (!shown) {
         setTimeout(function() {
-          document.getElementById('mp-toast').style.bottom = '0px';
-          sessionStorage.setItem('mpToastShown', '1');
-        }, 4000);
+    var t = document.getElementById('mp-toast');
+    document.body.appendChild(t);
+    t.style.bottom = '0px';
+    sessionStorage.setItem('mpToastShown', '1');
+  }, 4000);
       }
     })();
 
