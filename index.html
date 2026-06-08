@@ -851,10 +851,10 @@ function extractMatches(rows) {
           if (fase) pendingIda.fase = fase;
         } else {
           if (pendingIda) matches.push(pendingIda);
-          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig };
+          pendingIda = { rival: r0, tipo: 'Copa', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, sede: (row[5]||'').trim(), ig };
         }
       } else {
-        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, ig });
+        matches.push({ rival: r0, tipo: 'Torneo', gf: parseInt(r1), gc: parseInt(r2), goles: (row[3]||'').trim()||'—', asist: (row[4]||'').trim()||'—', pendiente: false, fase, sede: (row[5]||'').trim(), ig });
       }
     } else if (r1 === '' || r1 === '-' || r1 === '–') {
       if (pendingIda) { matches.push(pendingIda); pendingIda = null; }
@@ -1458,7 +1458,8 @@ function renderMatchesList(partidos, tipo) {
         // Regular match
         const sc = p.pendiente ? '' : p.gf > p.gc ? 's-w' : p.gf === p.gc ? 's-d' : 's-l';
         return `<div class="match-row">
-          <span class="match-badge ${p.tipo==='Copa'?'copa':''}">${p.tipo}</span>
+            ${p.sede ? `<span style="font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif;padding:2px 7px;background:var(--bg3);border-radius:4px;letter-spacing:0.5px;">${p.sede}</span>` : ''}
+            <span class="match-badge ${p.tipo==='Copa'?'copa':''}">${p.tipo}</span>
           <div class="match-teams" onclick="${!p.pendiente?`openRivalModal('${p.rival.replace(/'/g,"\\'")}')`:'void(0)'}" style="flex:1;cursor:${p.pendiente?'default':'pointer'}">
             Wehen vs <span style="${!p.pendiente?'text-decoration:underline;text-underline-offset:3px;':''}">${p.rival}</span>
           </div>
@@ -2058,8 +2059,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMuseumM
     })();
 
     function closeMpToast() {
-      document.getElementById('mp-toast').style.bottom = '-160px';
-    }
+    var t = document.getElementById('mp-toast');
+    t.style.bottom = '-' + (t.offsetHeight + 20) + 'px';
+  }
   </script>
   </div>
   <!-- ===== FIN TOAST DONACION ===== -->
